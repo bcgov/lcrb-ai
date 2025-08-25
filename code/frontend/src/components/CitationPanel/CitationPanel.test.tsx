@@ -41,6 +41,7 @@ describe("CitationPanel", () => {
       <CitationPanel
         activeCitation={activeCitation}
         setIsCitationPanelOpen={setIsCitationPanelOpen}
+        citations={[]}
       />
     );
 
@@ -58,6 +59,7 @@ describe("CitationPanel", () => {
       <CitationPanel
         activeCitation={activeCitation}
         setIsCitationPanelOpen={setIsCitationPanelOpen}
+        citations={[]}
       />
     );
     fireEvent.click(screen.getByRole('button', { hidden: true }));
@@ -69,6 +71,7 @@ describe("CitationPanel", () => {
       <CitationPanel
         activeCitation={activeCitation}
         setIsCitationPanelOpen={setIsCitationPanelOpen}
+        citations={[]}
       />
     );
 
@@ -81,6 +84,7 @@ describe("CitationPanel", () => {
       <CitationPanel
         activeCitation={activeCitation}
         setIsCitationPanelOpen={setIsCitationPanelOpen}
+        citations={[]}
       />
     );
 
@@ -94,6 +98,7 @@ describe("CitationPanel", () => {
       <CitationPanel
         activeCitation={activeCitation}
         setIsCitationPanelOpen={setIsCitationPanelOpen}
+        citations={[]}
       />
     );
     fireEvent.keyDown(screen.getByRole('button', { hidden: true }), { key: "Escape" });

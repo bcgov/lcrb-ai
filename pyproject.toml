@@ -17,6 +17,7 @@ azure-ai-formrecognizer = "3.3.3"
 azure-storage-blob = "12.20.0"
 azure-identity = "1.21.0"
 flask = {extras = ["async"], version = "^3.0.3"}
+flask-cors="^4.0.0"
 openai = "1.71.0"
 langchain = "0.2.17"
 langchain-community = "0.2.19"
@@ -76,3 +77,6 @@ include_namespace_packages = true
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.requires-plugins]
+poetry-plugin-export = ">=1.8"

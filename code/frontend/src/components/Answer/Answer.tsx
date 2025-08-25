@@ -24,6 +24,7 @@ interface Props {
   onSpeak?: any;
   isActive?: boolean;
   index: number;
+  onViewSources: (allCitations: Citation[]) => void;
 }
 const MyStackComponent = forwardRef<HTMLDivElement, any>((props, ref) => (
   <div {...props} ref={ref} />
@@ -32,6 +33,7 @@ const MyStackComponent = forwardRef<HTMLDivElement, any>((props, ref) => (
 export const Answer = ({
   answer,
   onCitationClicked,
+  onViewSources,
   onSpeak,
   isActive,
   index,
@@ -42,7 +44,7 @@ export const Answer = ({
   const answerContainerRef = useRef<HTMLDivElement>(null); // read the text from the container
   const messageBoxId = "message-" + index;
   const [isSpeaking, setIsSpeaking] = useState(false); // for speaker on
-  const [showSpeaker, setShowSpeaker] = useState(true); //for show and hide the speaker icon
+  const [showSpeaker, setShowSpeaker] = useState(false); //for show and hide the speaker icon
   const [isPaused, setIsPaused] = useState(false); //for pause
   const parsedAnswer = useMemo(() => parseAnswer(answer), [answer]);
   const [chevronIsExpanded, setChevronIsExpanded] =
@@ -109,6 +111,7 @@ export const Answer = ({
 
   useEffect(() => {
     const fetchSythesizerData = async () => {
+      if (import.meta.env.VITE_ENABLE_SPEECH !== "true") return;
       const response = await fetch("/api/speech");
       try {
         if (!response.ok) {
@@ -317,7 +320,7 @@ export const Answer = ({
             </span>
           </Stack.Item>
 
-          {!!parsedAnswer.citations.length && (
+          {/* {!!parsedAnswer.citations.length && (
             <Stack.Item aria-label="References">
               <Stack style={{ width: "100%" }}>
                 <Stack
@@ -352,9 +355,9 @@ export const Answer = ({
                 </Stack>
               </Stack>
             </Stack.Item>
-          )}
+          )} */}
         </Stack>
-        {chevronIsExpanded && (
+        {/* {chevronIsExpanded && (
           <div
             data-testid="citations-container"
             ref={refContainer}
@@ -391,8 +394,22 @@ export const Answer = ({
               );
             })}
           </div>
+        )} */}
+        {/* <Stack.Item>{getSpeechButtons()}</Stack.Item> */}
+        {!!parsedAnswer.citations.length && (
+          <Stack.Item>
+            <Text
+              className={styles.viewSourcesText}
+              onClick={() => onViewSources(parsedAnswer.citations)}
+              role="button"
+              tabIndex={0}
+            >
+              {parsedAnswer.citations.length > 1
+                ? `View Sources (${parsedAnswer.citations.length})`
+                : "View Source"}
+            </Text>
+          </Stack.Item>
         )}
-        <Stack.Item>{getSpeechButtons()}</Stack.Item>
       </MyStackComponent>
     </>
   );

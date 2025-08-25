@@ -10,6 +10,9 @@ from ..helpers.env_helper import EnvHelper
 from azure.identity import DefaultAzureCredential
 from azure.core.credentials import AzureKeyCredential
 
+import logging
+logger = logging.getLogger(__name__)
+
 
 class AzureSearchDatasource:
     def __init__(self, env_helper: EnvHelper):
@@ -24,7 +27,9 @@ class AzureSearchDatasource:
         )
 
     def create_or_update_datasource(self):
-        connection_string = self.generate_datasource_connection_string()
+        logger.info("[DEBUG] create_or_update_datasource() was called")
+        connection_string =  self.generate_datasource_connection_string()
+        logger.info(f"*****connection string {connection_string}")
         # Create Datasource
         container = SearchIndexerDataContainer(
             name=self.env_helper.AZURE_BLOB_CONTAINER_NAME
@@ -36,12 +41,17 @@ class AzureSearchDatasource:
             container=container,
             data_deletion_detection_policy=NativeBlobSoftDeleteDeletionDetectionPolicy(),
         )
+        logger.info(f"data_source: {data_source_connection}")
         self.indexer_client.create_or_update_data_source_connection(
             data_source_connection
         )
 
     def generate_datasource_connection_string(self):
+        logger.info("in generate connnection string")
         if self.env_helper.is_auth_type_keys():
+            logger.info('test 1')
             return f"DefaultEndpointsProtocol=https;AccountName={self.env_helper.AZURE_BLOB_ACCOUNT_NAME};AccountKey={self.env_helper.AZURE_BLOB_ACCOUNT_KEY};EndpointSuffix=core.windows.net"
         else:
+            logger.info('test 2')
             return f"ResourceId=/subscriptions/{self.env_helper.AZURE_SUBSCRIPTION_ID}/resourceGroups/{self.env_helper.AZURE_RESOURCE_GROUP}/providers/Microsoft.Storage/storageAccounts/{self.env_helper.AZURE_BLOB_ACCOUNT_NAME}/;"
+            

@@ -1,5 +1,5 @@
 import logging
-from typing import List
+from typing import List, Optional
 from .search_handler_base import SearchHandlerBase
 from azure.search.documents import SearchClient
 from azure.search.documents.indexes import SearchIndexClient
@@ -11,13 +11,22 @@ import re
 
 
 class IntegratedVectorizationSearchHandler(SearchHandlerBase):
+    def __init__(self, env_helper, custom_index_name: Optional[str] = None):
+        self.custom_index_name = custom_index_name
+        super().__init__(env_helper)
+
+    def _get_index_name(self) -> str:
+        """Get the index name to use - custom if provided, otherwise from env"""
+        return self.custom_index_name or self.env_helper.AZURE_SEARCH_INDEX
+
     def create_search_client(self):
-        logging.info("Creating Azure Search Client.")
+        index_name = self._get_index_name()
+        logging.info(f"Creating Azure Search Client for index: {index_name}")
         if self._check_index_exists():
-            logging.info("Search index exists. Returning Search Client.")
+            logging.info(f"Search index {index_name} exists. Returning Search Client.")
             return SearchClient(
                 endpoint=self.env_helper.AZURE_SEARCH_SERVICE,
-                index_name=self.env_helper.AZURE_SEARCH_INDEX,
+                index_name=index_name,
                 credential=(
                     AzureKeyCredential(self.env_helper.AZURE_SEARCH_KEY)
                     if self.env_helper.is_auth_type_keys()
@@ -164,7 +173,8 @@ class IntegratedVectorizationSearchHandler(SearchHandlerBase):
         return source_url
 
     def _check_index_exists(self) -> bool:
-        logging.info("Checking if search index exists.")
+        index_name = self._get_index_name()
+        logging.info("Checking if search index exists: {index_name}")
         search_index_client = SearchIndexClient(
             endpoint=self.env_helper.AZURE_SEARCH_SERVICE,
             credential=(
@@ -174,7 +184,7 @@ class IntegratedVectorizationSearchHandler(SearchHandlerBase):
             ),
         )
 
-        exists = self.env_helper.AZURE_SEARCH_INDEX in [
+        exists = index_name in [
             name for name in search_index_client.list_index_names()
         ]
         logging.info(f"Search index exists: {exists}.")

@@ -25,5 +25,5 @@ class Orchestrator:
                 f"Unknown orchestration strategy: {orchestrator.strategy.value}"
             )
         return await orchestrator.handle_message(
-            user_message, chat_history, conversation_id
+            user_message, chat_history, conversation_id, **kwargs
         )

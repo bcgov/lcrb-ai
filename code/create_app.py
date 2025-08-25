@@ -13,9 +13,11 @@ import requests
 from openai import AzureOpenAI, Stream, APIStatusError
 from openai.types.chat import ChatCompletionChunk
 from flask import Flask, Response, request, Request, jsonify
+from flask_cors import CORS, cross_origin
 from dotenv import load_dotenv
 from urllib.parse import quote
 from backend.batch.utilities.helpers.env_helper import EnvHelper
+from backend.batch.utilities.helpers.config.prompt_map import prompt_map
 from backend.batch.utilities.helpers.azure_search_helper import AzureSearchHelper
 from backend.batch.utilities.helpers.orchestrator_helper import Orchestrator
 from backend.batch.utilities.helpers.config.config_helper import ConfigHelper
@@ -43,7 +45,7 @@ def get_markdown_url(source, title, container_sas):
 
 def get_citations(citation_list):
     """Returns Formated Citations."""
-    logger.info("Method get_citations started")
+    logger.info(f"Method get_citations started:  {citation_list}")
     blob_client = AzureBlobStorageClient()
     container_sas = blob_client.get_container_sas()
     citations_dict = {"citations": []}
@@ -400,6 +402,16 @@ def create_app():
     )  # Load environment variables from .env file
 
     app = Flask(__name__)
+    app.url_map.strict_slashes = False        
+
+    CORS(
+        app,
+        resources={r"/api/*": {"origins": ["http://localhost:3000", "https://chatmvp-bydygzcccxb5cwa8.canadacentral-01.azurewebsites.net"]}},
+        supports_credentials=True,
+        methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
+        allow_headers=["Content-Type", "Authorization"],
+        expose_headers=["Content-Type"],
+    )
     env_helper: EnvHelper = EnvHelper()
     azure_search_helper: AzureSearchHelper = AzureSearchHelper()
 
@@ -417,10 +429,24 @@ def create_app():
     def conversation_azure_byod():
         logger.info("Method conversation_azure_byod started")
         try:
-            if should_use_data(env_helper, azure_search_helper):
-                return conversation_with_data(request, env_helper)
+            # if should_use_data(env_helper, azure_search_helper):
+            #     return conversation_with_data(request, env_helper)
+            # else:
+            #     return conversation_without_data(request, env_helper)
+            body = request.get_json(silent=True) or {}
+
+            # ── build *new* helpers that reflect the index coming from the UI ──
+            env_req = EnvHelper()
+            logger.info(f"Request body received: {body}")
+            if body.get("index"):
+                env_req.AZURE_SEARCH_INDEX = body["index"]
+
+            azure_req = AzureSearchHelper(env_req)  # pass env_req if __init__ accepts it
+
+            if should_use_data(env_req, azure_req):
+                return conversation_with_data(request, env_req)
             else:
-                return conversation_without_data(request, env_helper)
+                return conversation_without_data(request, env_req)
         except APIStatusError as e:
             error_message = str(e)
             logger.exception("Exception in /api/conversation | %s", error_message)
@@ -450,12 +476,15 @@ def create_app():
                     request.json["messages"][0:-1],
                 )
             )
-
+            selected_index = request.json.get("index", "dd-index-2")
+            logger.info(f"index in conversation_custom: {selected_index}")
             messages = await message_orchestrator.handle_message(
                 user_message=user_message,
                 chat_history=user_assistant_messages,
                 conversation_id=conversation_id,
                 orchestrator=get_orchestrator_config(),
+                selected_index = selected_index,
+                system_message_override=prompt_map.get(selected_index)
             )
 
             response_obj = {
@@ -547,4 +576,86 @@ def create_app():
         return jsonify({"is_auth_enforced": env_helper.ENFORCE_AUTH})
 
     app.register_blueprint(bp_chat_history_response, url_prefix="/api")
+
+    @app.route("/api/search", methods=["POST"])
+    @cross_origin(
+    origins=["http://localhost:3000", "https://chatmvp-bydygzcccxb5cwa8.canadacentral-01.azurewebsites.net"],
+    supports_credentials=True,
+    allow_headers=["Content-Type", "Authorization"],
+    methods=["POST"],
+    )
+    def search_documents():
+        import logging
+        logging.info('Processing AI public search request.')
+
+        body = request.get_json(silent=True) or {}
+        query = body.get('query', '')
+        index = body.get('index', env_helper.AZURE_SEARCH_INDEX)
+        top_k = int(body.get('top', 3))
+
+        # Step 1: Azure AI Search semantic query with extractive captions
+        search_url = f"{env_helper.AZURE_SEARCH_SERVICE}/indexes/{index}/docs/search?api-version=2021-04-30-Preview"
+        if env_helper.is_auth_type_keys():
+            headers = {'api-key': env_helper.AZURE_SEARCH_KEY, 'Content-Type': 'application/json'}
+        else:
+            token = env_helper.AZURE_TOKEN_PROVIDER.get_token().token
+            headers = {'Authorization': f'Bearer {token}', 'Content-Type': 'application/json'}
+
+        payload = {
+            'search': query,
+            'top': top_k,
+            'queryType': 'semantic',
+            'semanticConfiguration': env_helper.AZURE_SEARCH_SEMANTIC_SEARCH_CONFIG,
+            'captions': 'extractive'
+        }
+        resp = requests.post(search_url, headers=headers, json=payload)
+        search_json = resp.json()
+
+        # extract captions into snippets list
+        snippets = []
+        for idx, doc in enumerate(search_json.get('value', [])):
+            caption = doc.get('@search.captions', [{}])[0].get('text', '')
+            title = doc.get(env_helper.AZURE_SEARCH_TITLE_COLUMN) or f'Document {idx+1}'
+            url = doc.get(env_helper.AZURE_SEARCH_SOURCE_COLUMN)
+            snippets.append({
+                'id': doc.get(env_helper.AZURE_SEARCH_FIELDS_ID),
+                'title': title,
+                'snippet': caption,
+                'url': url
+            })
+
+        # Step 2: Call Azure OpenAI for summarization
+        system_prompt = (
+            'You are an assistant for the BC Liquor and Cannabis Regulation Branch. '
+            'Provide accurate, clear answers using the documents below.'
+        )
+        snippet_text = '\n'.join(f"{i+1}. {s['title']}: {s['snippet']}" for i, s in enumerate(snippets))
+        user_prompt = f"User question: {query}\n\nSearch snippets:\n{snippet_text}\n\nSummarize the answer in 3-4 sentences."
+
+        # instantiate AzureOpenAI client
+        if env_helper.is_auth_type_keys():
+            openai_client = AzureOpenAI(
+                azure_endpoint=env_helper.AZURE_OPENAI_ENDPOINT,
+                api_version=env_helper.AZURE_OPENAI_API_VERSION,
+                api_key=env_helper.AZURE_OPENAI_API_KEY,
+            )
+        else:
+            openai_client = AzureOpenAI(
+                azure_endpoint=env_helper.AZURE_OPENAI_ENDPOINT,
+                api_version=env_helper.AZURE_OPENAI_API_VERSION,
+                azure_ad_token_provider=env_helper.AZURE_TOKEN_PROVIDER,
+            )
+
+        completion = openai_client.chat.completions.create(
+            model=env_helper.AZURE_OPENAI_MODEL,
+            messages=[
+                {'role': 'system', 'content': system_prompt},
+                {'role': 'user', 'content': user_prompt}
+            ],
+            temperature=0.2,
+            max_tokens=500
+        )
+
+        summary = completion.choices[0].message.content
+        return jsonify({'summary': summary, 'results': snippets})
     return app

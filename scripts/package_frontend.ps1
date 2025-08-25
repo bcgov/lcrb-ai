@@ -7,6 +7,8 @@ poetry export -o dist/requirements.txt
 cp *.py dist -Force
 cp backend dist -r -Force
 
+cp routes.json dist -Force
+
 # Node
 cd frontend
 npm install

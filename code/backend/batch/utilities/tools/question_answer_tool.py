@@ -11,16 +11,22 @@ from ..helpers.llm_helper import LLMHelper
 from ..search.search import Search
 from .answering_tool_base import AnsweringToolBase
 from openai.types.chat import ChatCompletion
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
 
 class QuestionAnswerTool(AnsweringToolBase):
-    def __init__(self) -> None:
+    def __init__(self, selected_index: Optional[str] = None) -> None:
         self.name = "QuestionAnswer"
         self.env_helper = EnvHelper()
         self.llm_helper = LLMHelper()
-        self.search_handler = Search.get_search_handler(env_helper=self.env_helper)
+        self.selected_index = selected_index
+        logger.info(f"calling get search handler with selected index: {selected_index}")
+        self.search_handler = Search.get_search_handler(
+            env_helper=self.env_helper,
+            custom_index_name=self.selected_index
+        )
         self.verbose = True
 
         self.config = ConfigHelper.get_active_config_or_default()

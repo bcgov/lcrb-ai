@@ -29,6 +29,7 @@ const mockProps: ChatMessageContainerProps = {
   activeCardIndex: null,
   handleSpeech: jest.fn(),
   onShowCitation: jest.fn(),
+  onViewSources: jest.fn()
 };
 
 describe("ChatMessageContainer", () => {

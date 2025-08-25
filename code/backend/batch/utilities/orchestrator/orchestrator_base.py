@@ -70,6 +70,7 @@ class OrchestratorBase(ABC):
         conversation_id: Optional[str],
         **kwargs: Optional[dict],
     ) -> dict:
+        selected_index = kwargs.get('selected_index', None)
         result = await self.orchestrate(user_message, chat_history, **kwargs)
         if str(self.config.logging.log_tokens).lower() == "true":
             custom_dimensions = {

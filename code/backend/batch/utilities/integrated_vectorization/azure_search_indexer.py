@@ -49,6 +49,9 @@ class AzureSearchIndexer:
                 ),
             ],
         )
+        logger.info(
+            f" {indexer} target index"
+        )
         indexer_result = self.indexer_client.create_or_update_indexer(indexer)
         # Run the indexer
         self.indexer_client.run_indexer(indexer_name)

@@ -28,6 +28,7 @@ class IntegratedVectorizationEmbedder(EmbedderBase):
         config = ConfigHelper.get_active_config_or_default()
         try:
             search_datasource = AzureSearchDatasource(self.env_helper)
+            logger.info("Calling create_or_update_datasource()")
             search_datasource.create_or_update_datasource()
             search_index = AzureSearchIndex(self.env_helper, self.llm_helper)
             search_index.create_or_update_index()
@@ -36,6 +37,7 @@ class IntegratedVectorizationEmbedder(EmbedderBase):
             )
             search_skillset_result = search_skillset.create_skillset()
             search_indexer = AzureSearchIndexer(self.env_helper)
+            logger.info(f"calling create_or_update_indexer with {self.env_helper.AZURE_SEARCH_INDEXER_NAME} and {search_skillset_result.name}")
             indexer_result = search_indexer.create_or_update_indexer(
                 self.env_helper.AZURE_SEARCH_INDEXER_NAME,
                 skillset_name=search_skillset_result.name,

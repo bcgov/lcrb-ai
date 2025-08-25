@@ -109,7 +109,8 @@ export const QuestionInput = ({
       />
       <div className={styles.microphoneAndSendContainer}>
         {/* Microphone Icon */}
-        <button
+        
+        {/* <button
           type="button"
           disabled={isMicrophoneDisabled ? true : false}
           className={styles.questionInputMicrophone}
@@ -140,7 +141,8 @@ export const QuestionInput = ({
               alt="Microphone"
             />
           )}
-        </button>
+        </button> */}
+       
 
         {/* Send Button */}
         {isSendButtonDisabled ? (
@@ -159,11 +161,7 @@ export const QuestionInput = ({
             {disabled ? (
               <SendRegular className={styles.questionInputSendButtonDisabled} />
             ) : (
-              <img
-                src={Send}
-                className={styles.questionInputSendButton}
-                alt="Send"
-              />
+              <SendRegular className={styles.questionInputSendButton}/>
             )}
           </div>
         )}

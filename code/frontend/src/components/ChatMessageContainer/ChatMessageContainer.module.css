@@ -11,19 +11,18 @@
 .chatMessageUserMessage {
   padding: 20px;
   background: #edf5fd;
-  border-radius: 8px;
+  border-radius: 16px;
   box-shadow:
     0px 2px 4px rgba(0, 0, 0, 0.14),
     0px 0px 2px rgba(0, 0, 0, 0.12);
-  font-family: "Segoe UI";
+  font-family: inherit;
   font-style: normal;
   font-weight: 400;
   font-size: 14px;
   line-height: 22px;
   color: #242424;
-  flex: none;
+  flex: 0 1 auto;
   order: 0;
-  flex-grow: 0;
   white-space: pre-wrap;
   word-wrap: break-word;
   max-width: 800px;

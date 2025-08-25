@@ -20,6 +20,10 @@ describe("AssistantTypeSection", () => {
       <AssistantTypeSection
         assistantType={assistantTypes.contractAssistant}
         isAssistantAPILoading={false}
+        topics={[]}
+        selectedTopic=""
+        onTopicSelect={jest.fn()}
+        userFirstName=""
       />
     );
 
@@ -36,6 +40,10 @@ describe("AssistantTypeSection", () => {
       <AssistantTypeSection
         assistantType={assistantTypes.default}
         isAssistantAPILoading={false}
+        topics={[]}
+        selectedTopic=""
+        onTopicSelect={jest.fn()}
+        userFirstName=""
       />
     );
 
@@ -52,6 +60,10 @@ describe("AssistantTypeSection", () => {
       <AssistantTypeSection
         assistantType="unknown"
         isAssistantAPILoading={false}
+        topics={[]}
+        selectedTopic=""
+        onTopicSelect={jest.fn()}
+        userFirstName=""
       />
     );
 
@@ -65,6 +77,10 @@ describe("AssistantTypeSection", () => {
       <AssistantTypeSection
         assistantType={assistantTypes.default}
         isAssistantAPILoading={true}
+        topics={[]}
+        selectedTopic=""
+        onTopicSelect={jest.fn()}
+        userFirstName=""
       />
     );
 
@@ -77,6 +93,9 @@ describe("AssistantTypeSection", () => {
       <AssistantTypeSection
         assistantType={assistantTypes.contractAssistant}
         isAssistantAPILoading={true}
+        topics={[]}
+        selectedTopic=""
+        onTopicSelect={jest.fn()}
       />
     );
 

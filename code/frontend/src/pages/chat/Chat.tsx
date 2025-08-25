@@ -31,6 +31,8 @@ import { AssistantTypeSection } from "../../components/AssistantTypeSection/Assi
 import { ChatMessageContainer } from "../../components/ChatMessageContainer/ChatMessageContainer";
 import { CitationPanel } from "../../components/CitationPanel/CitationPanel";
 import { ChatHistoryPanel } from "../../components/ChatHistoryPanel/ChatHistoryPanel";
+// import { IndexSelector } from "../../components/IndexSelector/IndexSelector";
+import { Modal } from "@fluentui/react";
 
 const OFFSET_INCREMENT = 25;
 const [ASSISTANT, TOOL, ERROR] = ["assistant", "tool", "error"];
@@ -84,53 +86,66 @@ const Chat = () => {
   const [fetchingConvMessages, setFetchingConvMessages] = React.useState(false);
   const [isSavingToDB, setIsSavingToDB] = React.useState(false);
   const [isInitialAPItriggered, setIsInitialAPItriggered] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState("")
+  const availableIndexes = [
+    { name: "Due-Diligence", value: "dd-index-2"},
+    { name: "Licence Management", value: "licence-mgmt-index"},
+    { name: "Regulations/Law", value: "law-regs-index"},
+    { name: "MS Dynamics", value: "dynamics-index"},
+    { name: "Online Portal", value: "portal-index"},
+    { name: "Compliance & Enforcement", value: "ce-index"},
+    { name: "Project & Planning Insights", value: "project-planning-index"}
+  ];
+  const [citationList, setCitationList] = useState<Citation[] | null>(null);
+  const [userFirstName, setUserFirstName] = useState("");
+
 
   const saveToDB = async (messages: ChatMessage[], convId: string) => {
     if (!convId || !messages.length) {
       return;
     }
     const isNewConversation = !selectedConvId;
-    setIsSavingToDB(true);
+    setIsSavingToDB(false);
     await historyUpdate(messages, convId)
-      .then(async (res) => {
-        if (!res.ok) {
-          let errorMessage = "Answers can't be saved at this time.";
-          let errorChatMsg: ChatMessage = {
-            id: uuidv4(),
-            role: ERROR,
-            content: errorMessage,
-            date: new Date().toISOString(),
-          };
-          if (!messages) {
-            setAnswers([...messages, errorChatMsg]);
-            let err: Error = {
-              ...new Error(),
-              message: "Failure fetching current chat state.",
-            };
-            throw err;
-          }
-        }
-        let responseJson = await res.json();
-        if (isNewConversation && responseJson?.success) {
-          const metaData = responseJson?.data;
-          const newConversation = {
-            id: metaData?.conversation_id,
-            title: metaData?.title,
-            messages: messages,
-            date: metaData?.date,
-          };
-          setChatHistory((prevHistory) => [newConversation, ...prevHistory]);
-          setSelectedConvId(metaData?.conversation_id);
-        } else if (responseJson?.success) {
-          setMessagesByConvId(convId, messages);
-        }
-        setIsSavingToDB(false);
-        return res as Response;
-      })
-      .catch((err) => {
-        console.error("Error: while saving data", err);
-        setIsSavingToDB(false);
-      });
+    //   .then(async (res) => {
+    //     if (!res.ok) {
+    //       let errorMessage = "Answers can't be saved at this time.";
+    //       let errorChatMsg: ChatMessage = {
+    //         id: uuidv4(),
+    //         role: ERROR,
+    //         content: errorMessage,
+    //         date: new Date().toISOString(),
+    //       };
+    //       if (!messages) {
+    //         setAnswers([...messages, errorChatMsg]);
+    //         let err: Error = {
+    //           ...new Error(),
+    //           message: "Failure fetching current chat state.",
+    //         };
+    //         throw err;
+    //       }
+    //     }
+    //     let responseJson = await res.json();
+    //     if (isNewConversation && responseJson?.success) {
+    //       const metaData = responseJson?.data;
+    //       const newConversation = {
+    //         id: metaData?.conversation_id,
+    //         title: metaData?.title,
+    //         messages: messages,
+    //         date: metaData?.date,
+    //       };
+    //       setChatHistory((prevHistory) => [newConversation, ...prevHistory]);
+    //       setSelectedConvId(metaData?.conversation_id);
+    //     } else if (responseJson?.success) {
+    //       setMessagesByConvId(convId, messages);
+    //     }
+    //     setIsSavingToDB(false);
+    //     return res as Response;
+    //   })
+    //   .catch((err) => {
+    //     console.error("Error: while saving data", err);
+    //     setIsSavingToDB(false);
+    //   });
   };
 
   const makeApiRequest = async (question: string) => {
@@ -150,6 +165,7 @@ const Chat = () => {
 
     const request: ConversationRequest = {
       id: selectedConvId || conversationId,
+      index: selectedIndex,
       messages: [...answers, userMessage].filter(
         (messageObj) => messageObj.role !== ERROR
       ),
@@ -306,6 +322,7 @@ const Chat = () => {
     lastQuestionRef.current = "";
     setActiveCitation(undefined);
     setAnswers([]);
+    setSelectedIndex("");
     setConversationId(uuidv4());
     setSelectedConvId("");
   };
@@ -338,10 +355,10 @@ const Chat = () => {
     setActiveCitation([
       citation.content,
       citation.id,
-      citation.title ?? "",
+      citation.title ?? citation.filepath ?? "",
       citation.filepath ?? "",
-      "",
-      "",
+      citation.url ?? "",
+      ""
     ]);
     setIsCitationPanelOpen(true);
     setShowHistoryPanel(false);
@@ -455,6 +472,14 @@ const Chat = () => {
 
   useEffect(() => {
     setIsInitialAPItriggered(true);
+    fetch("/.auth/me")
+    .then(res => res.json())
+    .then((identities: any[]) => {
+      const claims = identities[0]?.user_claims || [];
+      const given = claims.find((c: any) => c.typ === "given_name")?.val;
+      if (given) setUserFirstName(given);
+    })
+    .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -521,6 +546,7 @@ const Chat = () => {
               citations: [],
             }}
             onCitationClicked={() => null}
+            onViewSources={() => {}}
             index={0}
           />
         </div>
@@ -529,24 +555,44 @@ const Chat = () => {
   };
   const showAssistantTypeSection =
     !fetchingConvMessages && !lastQuestionRef.current && answers.length === 0;
-  const showCitationPanel =
-    answers.length > 0 && isCitationPanelOpen && activeCitation;
+  const showCitationPanel =  isCitationPanelOpen && citationList && citationList.length > 0;
+
+  const handleViewSources = (all: Citation[]) => {
+    setCitationList(all);
+    setIsCitationPanelOpen(true);
+  };
   return (
     <Layout
       toggleSpinner={toggleSpinner}
       showHistoryBtn={showHistoryBtn}
       onSetShowHistoryPanel={onSetShowHistoryPanel}
       showHistoryPanel={showHistoryPanel}
+      newChat={clearChat}
+      selectedIndex={selectedIndex}
+      indexes={availableIndexes}
+      onIndexChange={setSelectedIndex}
+      disableNewChat={answers.length === 0 && !selectedIndex}
+      isGenerating={isGenerating}
     >
       <div className={styles.container}>
         <Stack horizontal className={styles.chatRoot}>
           <div
             className={`${styles.chatContainer} ${styles.MobileChatContainer}`}
           >
+            {/* <IndexSelector
+              selectedIndex={selectedIndex}
+              indexes={availableIndexes}
+              onChange={(index) => setSelectedIndex(index)}
+            /> */}
+
             {showAssistantTypeSection ? (
               <AssistantTypeSection
                 assistantType={assistantType}
                 isAssistantAPILoading={isAssistantAPILoading}
+                topics={availableIndexes.map((i) => ({ label: i.name, indexKey: i.value}))}
+                selectedTopic={selectedIndex}
+                onTopicSelect={setSelectedIndex}
+                userFirstName={userFirstName}
               />
             ) : (
               <div
@@ -559,6 +605,8 @@ const Chat = () => {
                   fetchingConvMessages={fetchingConvMessages}
                   handleSpeech={handleSpeech}
                   onShowCitation={onShowCitation}
+                  onViewSources={handleViewSources}
+
                 />
                 {showLoadingMessage && loadingMessageBlock()}
                 <div data-testid="streamendref-id" ref={chatMessageStreamEnd} />
@@ -594,13 +642,13 @@ const Chat = () => {
                   </span>
                 </Stack>
               )}
-              <BroomRegular
+              {/* <BroomRegular
                 className={`${styles.clearChatBroom} ${styles.mobileclearChatBroom}`}
                 style={{
                   background:
                     isGenerating || answers.length === 0
                       ? "#BDBDBD"
-                      : "radial-gradient(109.81% 107.82% at 100.1% 90.19%, #0F6CBD 33.63%, #2D87C3 70.31%, #8DDDD8 100%)",
+                      : "#003366",
                   cursor: isGenerating || answers.length === 0 ? "" : "pointer",
                 }}
                 onClick={clearChat}
@@ -610,7 +658,7 @@ const Chat = () => {
                 aria-label="Clear session"
                 role="button"
                 tabIndex={0}
-              />
+              /> */}
               <QuestionInput
                 clearOnSend
                 placeholder="Type a new question..."
@@ -627,13 +675,7 @@ const Chat = () => {
               />
             </Stack>
           </div>
-          {showCitationPanel && (
-            <CitationPanel
-              activeCitation={activeCitation}
-              setIsCitationPanelOpen={setIsCitationPanelOpen}
-            />
-          )}
-
+          
           {showHistoryPanel && (
             <ChatHistoryPanel
               chatHistory={chatHistory}
@@ -663,6 +705,31 @@ const Chat = () => {
           )}
         </Stack>
       </div>
+      {showCitationPanel && citationList && citationList?.length > 0 &&(
+        <Modal
+          isOpen={showCitationPanel}
+          onDismiss={() => setIsCitationPanelOpen(false)}
+          isBlocking={false}
+          styles={{
+            main: {
+              margin: "auto",
+              marginTop: "10vh",
+              width: "90%",
+              // maxWidth: "80vw",
+              borderRadius: 16,
+              padding: 16,
+              overflow: "hidden",
+              // boxShadow: "none"
+            },
+          }}
+        >
+            <CitationPanel
+              citations={citationList ?? []}
+              setIsCitationPanelOpen={setIsCitationPanelOpen}
+              activeCitation={activeCitation}
+            />
+        </Modal>
+      )}
     </Layout>
   );
 };

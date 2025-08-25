@@ -18,6 +18,12 @@ const DefaultLayoutProps = {
   onSetShowHistoryPanel: jest.fn(),
   showHistoryBtn: true,
   showHistoryPanel: true,
+  newChat: jest.fn(),
+  selectedIndex: "",
+  indexes: [],
+  onIndexChange: jest.fn(),
+  disableNewChat: false,
+  isGenerating: false,
 };
 
 const DefaultLayoutPropsloderfalse = {
@@ -26,6 +32,12 @@ const DefaultLayoutPropsloderfalse = {
     onSetShowHistoryPanel: jest.fn(),
     showHistoryBtn: true,
     showHistoryPanel: false,
+    newChat: jest.fn(),
+    selectedIndex: "",
+    indexes: [],
+    onIndexChange: jest.fn(),
+    disableNewChat: false,
+    isGenerating: false,
   };
 
 jest.mock('../../api/api', () => ({

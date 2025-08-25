@@ -13,9 +13,12 @@
   order: 0;
   align-self: stretch;
   flex-grow: 0.3;
-  max-width: 30%;
-  overflow-y: scroll;
+  max-width: 90vw;
+  /* overflow-y: scroll; */
   max-height: calc(100vh - 100px);
+  margin: 0 auto;
+  padding: 16px;
+  border-radius: 8px;
 }
 
 .citationPanelHeaderContainer {
@@ -23,7 +26,7 @@
 }
 
 .citationPanelHeader {
-  font-family: "Segoe UI";
+  font-family: inherit;
   font-style: normal;
   font-weight: 600;
   font-size: 18px;
@@ -46,7 +49,7 @@
 }
 
 .citationPanelTitle {
-  font-family: "Segoe UI";
+  font-family: inherit;
   font-style: normal;
   font-weight: 600;
   font-size: 16px;
@@ -57,7 +60,7 @@
 }
 
 .citationPanelContent {
-  font-family: "Segoe UI";
+  font-family: inherit;
   font-style: normal;
   font-weight: 400;
   font-size: 14px;
@@ -69,8 +72,27 @@
   flex-grow: 0;
 }
 
+.citationSnippet {
+  margin: 12px 0;
+  font-size: 14px;
+  color: #333;
+}
+
+.citationLink {
+  display: inline-block;
+  margin-top: 8px;
+  color: #0063B1;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.citationLink:hover {
+  text-decoration: underline;
+}
+
+
 .citationPanelDisclaimer {
-  font-family: "Segoe UI";
+  font-family: inherit;
   font-style: normal;
   font-weight: 400;
   font-size: 12px;

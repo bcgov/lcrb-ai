@@ -13,18 +13,35 @@ body {
 .layout {
     display: flex;
     flex-direction: column;
-    height: 100%;
+    height: 100vh;
+    overflow: hidden;
 }
 
 .header {
     background-color: #f2f2f2;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    /* margin-bottom: clamp(64px, 8vh, 120px); */
 }
 
 .headerContainer {
-    display: flex;
-    justify-content: left;
-    align-items: center;
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
+
+/* New: absolutely center only this block */
+.centerGroup {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 
 .headerTitleContainer {
     display: flex;
@@ -34,7 +51,7 @@ body {
 }
 
 .headerTitle {
-    font-family: "Segoe UI";
+    font-family: inherit;
     font-style: normal;
     font-weight: 600;
     font-size: 18px;
@@ -45,8 +62,8 @@ body {
 }
 
 .headerIcon {
-    height: 24px;
-    width: 24px;
+    height: 60px;
+    width: 60px;
     margin-left: 36px;
 }
 
@@ -55,11 +72,8 @@ body {
     flex-direction: row;
     justify-content: center;
     align-items: center;
-    padding: 5px 12px;
+    padding: 5px 5px;
     gap: 4px;
-    width: 86px;
-    height: 32px;
-    background: radial-gradient(109.81% 107.82% at 100.1% 90.19%, #0F6CBD 33.63%, #2D87C3 70.31%, #8DDDD8 100%) /* warning: gradient uses a rotation that is not supported by CSS and may not behave as expected */;
     border-radius: 4px;
     flex: none;
     order: 1;
@@ -74,11 +88,19 @@ body {
 }
 
 .shareButton {
-    color: #FFFFFF;
+    color: #003366;
+    width: 24px;
+    height: 24px;
+}
+
+.newChatIcon {
+    /* color: #003366; */
+    width: 24px;
+    height: 24px;
 }
 
 .shareButtonText {
-    font-family: "Segoe UI";
+    font-family: inherit;
     font-style: normal;
     font-weight: 600;
     font-size: 14px;
@@ -89,7 +111,7 @@ body {
 }
 
 .urlTextBox {
-    font-family: "Segoe UI";
+    font-family: inherit;
     font-style: normal;
     font-weight: 400;
     font-size: 14px;
@@ -122,7 +144,7 @@ body {
 }
 
 .copyButtonText {
-    font-family: "Segoe UI";
+    font-family: inherit;
     font-style: normal;
     font-weight: 600;
     font-size: 14px;

@@ -111,6 +111,7 @@ describe("Answer.tsx", () => {
           onSpeak={mockOnSpeak}
           isActive={true}
           index={0}
+          onViewSources={jest.fn()}
         />
       );
     });
@@ -135,6 +136,7 @@ describe("Answer.tsx", () => {
           index={2}
           onCitationClicked={mockCitationClick}
           onSpeak={mockOnSpeak}
+          onViewSources={jest.fn()}
         />
       );
     });
@@ -158,6 +160,7 @@ describe("Answer.tsx", () => {
           index={2}
           onCitationClicked={mockCitationClick}
           onSpeak={mockOnSpeak}
+          onViewSources={jest.fn()}
         />
       );
     });
@@ -184,6 +187,7 @@ describe("Answer.tsx", () => {
           index={2}
           onCitationClicked={mockCitationClick}
           onSpeak={mockOnSpeak}
+          onViewSources={jest.fn()}
         />
       );
     });
@@ -211,6 +215,7 @@ describe("Answer.tsx", () => {
           index={2}
           onCitationClicked={mockCitationClick}
           onSpeak={mockOnSpeak}
+          onViewSources={jest.fn()}
         />
       );
     });
@@ -242,6 +247,7 @@ describe("Answer.tsx", () => {
           index={2}
           onCitationClicked={mockCitationClick}
           onSpeak={mockOnSpeak}
+          onViewSources={jest.fn()}
         />
       );
     });
@@ -277,6 +283,7 @@ describe("Answer.tsx", () => {
           index={2}
           onCitationClicked={mockCitationClick}
           onSpeak={mockOnSpeak}
+          onViewSources={jest.fn()}
         />
       );
     });
@@ -321,6 +328,7 @@ describe("Answer.tsx", () => {
           index={2}
           onCitationClicked={mockCitationClick}
           onSpeak={mockOnSpeak}
+          onViewSources={jest.fn()}
         />
       );
     });
@@ -348,6 +356,7 @@ describe("Answer.tsx", () => {
           index={2}
           onCitationClicked={mockCitationClick}
           onSpeak={mockOnSpeak}
+          onViewSources={jest.fn()}
         />
       );
       reRender = rerender;
@@ -372,6 +381,7 @@ describe("Answer.tsx", () => {
           index={2}
           onCitationClicked={mockCitationClick}
           onSpeak={mockOnSpeak}
+          onViewSources={jest.fn()}
         />
       );
     });
@@ -395,6 +405,7 @@ describe("Answer.tsx", () => {
           index={2}
           onCitationClicked={mockCitationClick}
           onSpeak={mockOnSpeak}
+          onViewSources={jest.fn()}
         />
       );
       reRender = rerender;
@@ -419,6 +430,7 @@ describe("Answer.tsx", () => {
           index={3}
           onCitationClicked={mockCitationClick}
           onSpeak={mockOnSpeak}
+          onViewSources={jest.fn()}
         />
       );
     });
@@ -441,6 +453,7 @@ describe("Answer.tsx", () => {
           index={2}
           onCitationClicked={mockCitationClick}
           onSpeak={mockOnSpeak}
+          onViewSources={jest.fn()}
         />
       );
     });
@@ -475,6 +488,7 @@ describe("Answer.tsx", () => {
           index={2}
           onCitationClicked={mockCitationClick}
           onSpeak={mockOnSpeak}
+          onViewSources={jest.fn()}
         />
       );
     });
@@ -497,6 +511,7 @@ describe("Answer.tsx", () => {
           onSpeak={mockOnSpeak}
           isActive={true}
           index={1}
+          onViewSources={jest.fn()}
         />
       );
     });
@@ -529,6 +544,7 @@ describe("Answer.tsx", () => {
           index={2}
           onCitationClicked={mockCitationClick}
           onSpeak={mockOnSpeak}
+          onViewSources={jest.fn()}
         />
       );
     });
@@ -555,6 +571,7 @@ describe("Answer.tsx", () => {
           index={2}
           onCitationClicked={mockCitationClick}
           onSpeak={mockOnSpeak}
+          onViewSources={jest.fn()}
         />
       );
     });
@@ -579,6 +596,7 @@ describe("Answer.tsx", () => {
           index={2}
           onCitationClicked={mockCitationClick}
           onSpeak={mockOnSpeak}
+          onViewSources={jest.fn()}
         />
       );
       rerender = rerenderFunc;
@@ -604,6 +622,7 @@ describe("Answer.tsx", () => {
           index={3} // Change index
           onCitationClicked={mockCitationClick}
           onSpeak={mockOnSpeak}
+          onViewSources={jest.fn()}
         />
       );
     });
@@ -628,6 +647,7 @@ describe("Answer.tsx", () => {
           index={2}
           onCitationClicked={mockCitationClick}
           onSpeak={mockOnSpeak}
+          onViewSources={jest.fn()}
         />
       );
     });
@@ -654,6 +674,7 @@ describe("Answer.tsx", () => {
           index={2}
           onCitationClicked={mockCitationClick}
           onSpeak={mockOnSpeak}
+          onViewSources={jest.fn()}
         />
       );
     });
@@ -680,6 +701,7 @@ describe("Answer.tsx", () => {
           index={2}
           onCitationClicked={mockCitationClick}
           onSpeak={mockOnSpeak}
+          onViewSources={jest.fn()}
         />
       );
     });
@@ -706,6 +728,7 @@ describe("Answer.tsx", () => {
           index={2}
           onCitationClicked={mockCitationClick}
           onSpeak={mockOnSpeak}
+          onViewSources={jest.fn()}
         />
       );
     });
@@ -729,6 +752,7 @@ describe("Answer.tsx", () => {
           index={3}
           onCitationClicked={mockCitationClick}
           onSpeak={mockOnSpeak}
+          onViewSources={jest.fn()}
         />
       );
     });
@@ -749,6 +773,7 @@ describe("Answer.tsx", () => {
           index={2}
           onCitationClicked={mockCitationClick}
           onSpeak={mockOnSpeak}
+          onViewSources={jest.fn()}
         />
       );
     });

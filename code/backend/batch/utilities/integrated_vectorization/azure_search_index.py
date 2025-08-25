@@ -66,6 +66,20 @@ class AzureSearchIndex:
                 filterable=False,
                 facetable=False,
             ),
+            SearchableField(
+                name="text",
+                type=SearchFieldDataType.String,
+                sortable=False,
+                filterable=False,
+                facetable=False,
+            ),
+            SearchableField(
+                name="layoutText",
+                type=SearchFieldDataType.String,
+                sortable=False,
+                filterable=False,
+                facetable=False,
+            ),
             SearchField(
                 name="content_vector",
                 type=SearchFieldDataType.Collection(SearchFieldDataType.Single),

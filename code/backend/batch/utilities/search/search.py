@@ -11,13 +11,13 @@ from ..helpers.env_helper import EnvHelper
 
 class Search:
     @staticmethod
-    def get_search_handler(env_helper: EnvHelper) -> SearchHandlerBase:
+    def get_search_handler(env_helper: EnvHelper, custom_index_name=None) -> SearchHandlerBase:
         # TODO Since the full workflow for PostgreSQL indexing is not yet complete, you can comment out env_helper.DATABASE_TYPE == DatabaseType.POSTGRESQL.value.
         if env_helper.DATABASE_TYPE == DatabaseType.POSTGRESQL.value:
             return AzurePostgresHandler(env_helper)
         else:
             if env_helper.AZURE_SEARCH_USE_INTEGRATED_VECTORIZATION:
-                return IntegratedVectorizationSearchHandler(env_helper)
+                return IntegratedVectorizationSearchHandler(env_helper, custom_index_name=custom_index_name)
             else:
                 return AzureSearchHandler(env_helper)
 

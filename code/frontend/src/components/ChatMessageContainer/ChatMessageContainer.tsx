@@ -16,6 +16,7 @@ export type ChatMessageContainerProps = {
   activeCardIndex: number | null;
   handleSpeech: any;
   onShowCitation: (citedDocument: Citation) => void;
+  onViewSources: (all: Citation[]) => void;
 };
 
 const parseCitationFromMessage = (message: ChatMessage) => {
@@ -39,6 +40,7 @@ export const ChatMessageContainer: React.FC<ChatMessageContainerProps> = (
     handleSpeech,
     activeCardIndex,
     onShowCitation,
+    onViewSources
   } = props;
   return (
     <Fragment>
@@ -79,6 +81,7 @@ export const ChatMessageContainer: React.FC<ChatMessageContainerProps> = (
                   onSpeak={handleSpeech}
                   isActive={activeCardIndex === index}
                   onCitationClicked={(c) => onShowCitation(c)}
+                  onViewSources={onViewSources}
                   index={index}
                 />
               </div>

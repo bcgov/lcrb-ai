@@ -9,7 +9,7 @@ from backend.batch.utilities.chat_history.auth_utils import (
 )
 from backend.batch.utilities.helpers.config.config_helper import ConfigHelper
 from backend.batch.utilities.helpers.env_helper import EnvHelper
-from backend.batch.utilities.chat_history.database_factory import DatabaseFactory
+# from backend.batch.utilities.chat_history.database_factory import DatabaseFactory
 
 load_dotenv()
 bp_chat_history_response = Blueprint("chat_history", __name__)
@@ -21,6 +21,7 @@ env_helper: EnvHelper = EnvHelper()
 
 def init_database_client():
     try:
+        from backend.batch.utilities.chat_history.database_factory import DatabaseFactory
         conversation_client = DatabaseFactory.get_conversation_client()
         return conversation_client
     except Exception as e:
@@ -356,7 +357,8 @@ async def delete_all_conversations():
 async def update_conversation():
     config = ConfigHelper.get_active_config_or_default()
     if not config.enable_chat_history:
-        return jsonify({"error": "Chat history is not available"}), 400
+        return jsonify(message="Chat history is disabled"), 200
+        # return jsonify({"error": "Chat history is not available"}), 204
 
     try:
         # Get user details from request headers

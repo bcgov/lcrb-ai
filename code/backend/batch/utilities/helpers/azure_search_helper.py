@@ -99,6 +99,14 @@ class AzureSearchHelper:
                 name=self.env_helper.AZURE_SEARCH_CONTENT_COLUMN,
                 type=SearchFieldDataType.String,
             ),
+            SearchableField(
+                name="text",
+                type=SearchFieldDataType.String,
+            ),
+            SearchableField(
+                name="layoutText",
+                type=SearchFieldDataType.String,
+            ),
             SearchField(
                 name=self.env_helper.AZURE_SEARCH_CONTENT_VECTOR_COLUMN,
                 type=SearchFieldDataType.Collection(SearchFieldDataType.Single),
@@ -221,7 +229,7 @@ class AzureSearchHelper:
                 facetable=True,
             ),
             SearchableField(
-                name="content",
+                name="text",
                 type=SearchFieldDataType.String,
             ),
             SearchField(
