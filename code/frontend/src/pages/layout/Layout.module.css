@@ -1,0 +1,201 @@
+body {
+    font-size: 16px; /* Use relative units */
+    line-height: 1.5;
+    margin: 0;
+    padding: 0;
+}
+
+.header, .footer {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.layout {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.header {
+    background-color: #f2f2f2;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    /* margin-bottom: clamp(64px, 8vh, 120px); */
+}
+
+.headerContainer {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* New: absolutely center only this block */
+.centerGroup {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+
+.headerTitleContainer {
+    display: flex;
+    align-items: center;
+    margin-left: 8px;
+    text-decoration: none;
+}
+
+.headerTitle {
+    font-family: inherit;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 18px;
+    line-height: 28px;
+    display: flex;
+    align-items: flex-end;
+    color: #242424;
+}
+
+.headerIcon {
+    height: 60px;
+    width: 60px;
+    margin-left: 36px;
+}
+
+.shareButtonContainer {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 5px 5px;
+    gap: 4px;
+    border-radius: 4px;
+    flex: none;
+    order: 1;
+    flex-grow: 0;
+    cursor: pointer;
+}
+
+.layoutRightButtons {
+    position: absolute;
+    right: 20px;
+    gap: 1rem;
+}
+
+.shareButton {
+    color: #003366;
+    width: 24px;
+    height: 24px;
+}
+
+.newChatIcon {
+    /* color: #003366; */
+    width: 24px;
+    height: 24px;
+}
+
+.shareButtonText {
+    font-family: inherit;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 20px;
+    display: flex;
+    align-items: center;
+    color: #FFFFFF;
+}
+
+.urlTextBox {
+    font-family: inherit;
+    font-style: normal;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 20px;
+    color: #707070;
+    border: 1px solid #D1D1D1;
+    border-radius: 4px;
+}
+
+.copyButtonContainer {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 5px 12px;
+    gap: 4px;
+    background: #FFFFFF;
+    border: 1px solid #D1D1D1;
+    border-radius: 4px;
+}
+
+.copyButtonContainer:hover {
+    cursor: pointer;
+    background: #D1D1D1;
+}
+
+.copyButton {
+    color: #424242;
+}
+
+.copyButtonText {
+    font-family: inherit;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 20px;
+    display: flex;
+    align-items: center;
+    color: #242424;
+}
+
+.chatEmptyState {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin-top: 25px;
+  }
+
+  .chatEmptyStateTitle {
+    font-style: normal;
+    font-weight: 700;
+    font-size: 36px;
+    display: flex;
+    align-items: flex-end;
+    text-align: center;
+    line-height: 24px;
+    margin-top: 36px;
+    margin-bottom: 0px;
+  }
+
+  .chatEmptyStateSubtitle {
+    margin-top: 20px;
+    font-style: normal;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 150%;
+    align-items: flex-end;
+    text-align: center;
+    letter-spacing: -0.01em;
+    color: #616161;
+  }
+
+  .chatIcon {
+    height: 62px;
+    width: auto;
+  }
+
+@media screen and (-ms-high-contrast: active), (forced-colors: active) {
+
+.shareButtonContainer, .headerTitleContainer{
+    border: 2px solid WindowText;
+}
+
+}
