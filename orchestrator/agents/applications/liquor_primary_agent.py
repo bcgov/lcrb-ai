@@ -1,46 +1,122 @@
 import uuid
 from typing import Any, Dict, List
 from orchestrator.core.store import DB_APPLICATIONS
+from orchestrator.schemas.liquor_primary_schema import FIELD_SCHEMA
+from datetime import datetime
 from .validator import validate
+import os
 
-FIELDS: List[Dict[str, Any]] = [
-    {"id": "business_name", "label": "Business Name", "type": "text", "required": True},
-    {"id": "establishment_address", "label": "Establishment Address", "type": "text", "required": True},
-    {"id": "establishment_name", "label": "Establishment Name", "type": "text", "required": True},
-    {"id": "hours", "label": "Operating Hours", "type": "compound", "required": True, "help_ref": "policy_manual.lp.hours"},
-    {"id": "minors_policy", "label": "Minors Policy", "type": "select", "required": True},
-    {"id": "floorplan_uploaded", "label": "Floorplan Uploaded", "type": "boolean", "required": False},
+REQUIRED_SLOTS = ["floor_plan", "site_plan"]
+OPTIONAL_SLOTS = [
+    "central_securities_register",
+    "supporting_documents",
+    "personal_history_summary",
+    "shareholders",
+    "letter_of_intent",
+    "signage_documents"
 ]
 
 def create_draft(business_id: str, app_type="liquor_primary") -> str:
-    app_id = f"APP-{uuid.uuid4().hex[:8].upper()}"
-    DB_APPLICATIONS[app_id] = {"type": app_type, "business_id": business_id, "data": {}, "status": "Draft", "fees": None, "receipt_id": None}
+    app_id = f"APP-{len(DB_APPLICATIONS)+1:07d}"
+    DB_APPLICATIONS[app_id] = {
+        "type": app_type,
+        "business_id": business_id,
+        "data": {},
+        "attachments": [],
+        "status": "Draft",
+        "fees": None,
+        "receipt_id": None}
+
+    # Seed the default values (province, country, etc.)
+    for f in FIELD_SCHEMA: 
+        if "default" in f: 
+            DB_APPLICATIONS[app_id]["data"][f["id"]] = f["default"]
+
     return app_id
 
 
 def get_required_fields(_: str) -> List[Dict[str, Any]]:
-    return FIELDS
+    return FIELD_SCHEMA
 
 
-def upsert_field(application_id: str, field_id: str, value: Any) -> Dict[str, Any]:
-    draft = DB_APPLICATIONS[application_id]
+def upsert_field(app_id: str, field_id: str, value: Any) -> Dict[str, Any]:
+    draft = DB_APPLICATIONS[app_id]
+    # Normalize common transformers
+    if field_id == "establishmentAddressPostalCode" and isinstance(value, str):
+        value = value.strip().upper().replace(" ", "")
+        # insert space (A1A 1A1) if 6 chars
+        if len(value) == 6:
+            value = value[:3] + " " + value[3:]
+    
+    if field_id == "totalOccupantLoad":
+        try:
+            value = int(value) if value not in (None, "") else None
+        except Exception:
+            raise ValueError("totalOccupantLoad must be a number")
+
+    # support ID/Name pairs from autocomplete components
+    if field_id in ("indigenousNationId", "policeJurisdictionId"):
+        value = (value or "").strip()
+
     draft["data"][field_id] = value
-    if field_id in ("hours", "minors_policy"):
-        v = validate("liquor_primary", field_id, value, draft["data"])
-        return {"ok": True, "errors": [], "warnings": v["reasons"] if v["decision"] != "allow" else [], "decision": v["decision"]}
-    return {"ok": True, "errors": [], "warnings": [], "decision": "allow"}
+    return {"ok": True, "field_id": field_id, "value": value}
 
 
-def review(application_id: str) -> Dict[str, Any]:
-    draft = DB_APPLICATIONS[application_id]
-    data = draft["data"]
-    missing = [f["id"] for f in FIELDS if f.get("required", True) and f["id"] not in data]
-    warnings = []
-    if "hours" in data:
-        v = validate("liquor_primary", "hours", data["hours"], data)
-        if v["decision"] == "warn":
-            warnings.extend(v["reasons"])
-    return {"missing": missing, "warnings": warnings, "summary": data}
+def review(app_id: str) -> Dict[str, Any]:
+    app = DB_APPLICATIONS[app_id]
+    data = app.get("data", {})
+    atts = app.get("attachments", []) or []
+
+    missing: List[str] = []
+    warnings: List[str] = []
+
+    # Required Fields
+    for f in FIELD_SCHEMA:
+        if f.get("required"):
+            val = data.get(f["id"])
+            t = f.get("type")
+            if t == "boolean":
+                # Required booleans must be set. If a specific boolean must be True (eg, declarations),
+                # mark it in FIELD_SCHEMA with "required_true": True
+                if f.get("required_true", False):
+                    if val is not True:
+                        missing.append(f["id"])
+                elif val is None:
+                    missing.append(f["id"])
+            elif t == "number":
+                if val in (None, ""):
+                    missing.append(f["id"])
+            else:
+                if val is None or (isinstance(val, str) and not val.strip()):
+                    missing.append(f["id"])
+    
+    # Required upload slots
+    present_slots = {a.get("slot") for a in atts}
+    for slot in REQUIRED_SLOTS:
+        if slot not in present_slots:
+            missing.append(slot)
+    
+    # Warnings and Soft Rules
+    # 1) Hours pairing – if any daily "Open" is set, require matching "Close" for that day (warning only)
+    day_pairs = [
+        ("serviceHoursSundayOpen", "serviceHoursSundayClose"),
+        ("serviceHoursMondayOpen", "serviceHoursMondayClose"),
+        ("serviceHoursTuesdayOpen", "serviceHoursTuesdayClose"),
+        ("serviceHoursWednesdayOpen", "serviceHoursWednesdayClose"),
+        ("serviceHoursThursdayOpen", "serviceHoursThursdayClose"),
+        ("serviceHoursFridayOpen", "serviceHoursFridayClose"),
+        ("serviceHoursSaturdayOpen", "serviceHoursSaturdayClose"),
+    ]
+    for open_id, close_id in day_pairs:
+        open_v, close_v = data.get(open_id), data.get(close_id)
+        if (open_v and not close_v) or (close_v and not open_v):
+            warnings.append(f"Hours pairing incomplete: {open_id} / {close_id}.")
+
+    # 2) Zoning hint – if zoning not confirmed, warn (does not block)
+    if data.get("isPermittedInZoning") is not True:
+        warnings.append("Zoning declaration is not confirmed.")
+    
+    return {"missing": missing, "warnings": warnings}
 
 
 def compute_fees(application_id: str) -> Dict[str, Any]:

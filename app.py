@@ -1,6 +1,6 @@
 import json
 import os
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, Any
@@ -9,6 +9,8 @@ from orchestrator.core.orchestrator import Orchestrator
 from orchestrator.agents import rag_agent
 from orchestrator.agents.applications.liquor_primary_agent import create_draft, get_required_fields, upsert_field, review, compute_fees, submit
 from orchestrator.agents.applications.screening import screen
+# from orchestrator.clients.portal_api import PortalApi
+# from flask import request
 
 
 app = FastAPI(title="Orchestrator Agent Service")
@@ -21,6 +23,44 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Helpers
+def _ensure_app(session_id: str) -> str:
+    app_id = get_state(session_id).get("active_application_id")
+    if not app_id:
+        raise HTTPException(status_code = 400, detail = "No active application.")
+    if app_id not in DB_APPLICATIONS:
+        raise HTTPException(status_code = 404, detail = f"Application {app_id} not found")
+    return app_id
+
+def _ensure_attachments(app_id: str):
+    DB_APPLICATIONS[app_id].setdefault("attachments", [])
+
+def _compute_next_field(app_id: str):
+    fields = get_required_fields(app_id)
+    rev = review(app_id)
+    form_ids = {f["id"] for f in fields}
+    target = next((m for m in rev.get("missing", []) if m in form_ids), None)
+    if not target:
+        data = DB_APPLICATIONS[app_id].get("data", {})
+        for f in fields:
+            if f.get("required", True):
+                val = data.get(f["id"]); t = f.get("type")
+                if t == "boolean":
+                    if f.get("required_true", False):
+                        if val is not True: target = f["id"]; break
+                    elif val is None: target = f["id"]; break
+                elif t == "number":
+                    if val in (None, ""): target = f["id"]; break
+                else:
+                    if val is None or (isinstance(val, str) and not val.strip()): target = f["id"]; break
+    if not target: return None
+    for f in fields:
+        if f["id"] == target:
+            return {"id": f["id"], "label": f.get("label"), "type": f.get("type"),
+                    "required": f.get("required", True), "help": f.get("help_ref")}
+    return None
+
+
 class ChatTurn(BaseModel):
     session_id: str
     message: str
@@ -29,6 +69,10 @@ class ChatTurn(BaseModel):
 @app.get("/health")
 async def health():
     return {"ok": True}
+
+@app.get("/debug")
+def debug_apps():
+    return {"apps": list(DB_APPLICATIONS.keys())}
 
 @app.post("/chat")
 async def chat(turn: ChatTurn):
@@ -72,22 +116,8 @@ async def chat(turn: ChatTurn):
                 "state": state,
                 "message": "No active application. Say 'start application' first."
             }
-        fields = get_required_fields(app_id)
         rev = review(app_id)
-        missing = rev.get("missing", [])
-        next_field = None
-        if missing:
-            fid = missing[0]
-            for f in fields:
-                if f["id"] == fid:
-                    next_field = {
-                        "id": f["id"],
-                        "label": f.get("label"),
-                        "type": f.get("type"),
-                        "required": f.get("required", True),
-                        "help": f.get("help_ref")
-                    }
-                    break
+        next_field = _compute_next_field(app_id)
         return {
             "intent": "NEXT_FIELD",
             "confidence": routing["confidence"],
@@ -103,26 +133,20 @@ async def chat(turn: ChatTurn):
         state["selected_business_id"] = state.get("selected_business_id") or "B1"
         app_id = state.get("active_application_id")
         if not app_id:
+            # app_id = create_draft(state["selected_business_id"])
+            # auth_header = request.headers.get("Authorization", "")
+            # token = auth_header.split(" ", 1)[1] if " " in auth_header else auth_header
+
+            # portal = PortalApiClient(
+            #     base_url="http://localhost:5000",
+            #     token_provider=lambda: token
+            # )
+
             app_id = create_draft(state["selected_business_id"])
             state["active_application_id"] = app_id
 
-
-        fields = get_required_fields(app_id)
         rev = review(app_id)
-        missing = rev.get("missing", [])
-        next_field = None
-        if missing:
-            fid = missing[0]
-            for f in fields:
-                if f["id"] == fid:
-                    next_field = {
-                        "id": f["id"],
-                        "label": f.get("label"),
-                        "type": f.get("type"),
-                        "required": f.get("required", True),
-                        "help": f.get("help_ref")
-                    }
-                    break
+        next_field = _compute_next_field(app_id)
 
         return {
             "application_id": app_id,
@@ -134,7 +158,7 @@ async def chat(turn: ChatTurn):
             "review": rev,
             "next_field": next_field,
             "ctas": [
-                {"label": "Open Application", "routerLink": ["/applications", app_id], "params": {"type": "liquor_primary"}},
+                {"label": "Open Application", "href" : f"/assets/mock-app.html?session_id={turn.session_id}&app_id={app_id}"},
                 {"label": "Upload floorplan"}
             ]
         }
@@ -200,11 +224,47 @@ async def submit_app(session_id: str, attestation: bool = Form(True)):
 
 @app.post("/upload/floorplan")
 async def upload_floorplan(session_id: str, file: UploadFile = File(...)):
-    app_id = get_state(session_id).get("active_application_id")
-    if not app_id:
-        raise HTTPException(status_code=400, detail="No active application.")
+    # app_id = get_state(session_id).get("active_application_id")
+    # if not app_id:
+    #     raise HTTPException(status_code=400, detail="No active application.")
+    # content = await file.read()
+    # result = screen(app_id, file.filename, content)
+    # if result.get("passed"):
+    #     DB_APPLICATIONS[app_id]["data"]["floorplan_uploaded"] = True
+    # return result
+    return await upload_attachment(session_id=session_id, slot="floor_plan", file=file)
+
+@app.post("/attachments/upload")
+async def upload_attachment(
+    session_id: str,
+    slot: str = Query(..., description="e.g., floor_plan | letter_of_intent | signage_photos"),
+    file: UploadFile = File(...)
+):
+    app_id = _ensure_app(session_id)
+    print(app_id)
+    _ensure_attachments(app_id)
     content = await file.read()
-    result = screen(app_id, file.filename, content)
-    if result.get("passed"):
-        DB_APPLICATIONS[app_id]["data"]["floorplan_uploaded"] = True
-    return result
+
+    # Screen only the required floor plans (demo) - logic can be added later to support all different files
+    screening = {}
+    if slot == "floor_plan":
+        screening = screen(app_id, file.filename, content)  or {}
+        if screening.get("passed"):
+            DB_APPLICATIONS[app_id].setdefault("data", {}).update({"floorplan_uploaded": True})
+        
+    att_id = f"att-{len(DB_APPLICATIONS[app_id]['attachments'])+1}"
+    DB_APPLICATIONS[app_id]["attachments"].append({
+        "id": att_id,
+        "slot": slot, 
+        "filename": file.filename,
+        "mimetype": file.content_type,
+        "size": len(content)
+    })
+
+    return {"ok": True, "attachment_id": att_id, "slot": slot, "screening": screening}
+
+@app.get("/attachments")
+async def list_attachments(session_id: str):
+    app_id = _ensure_app(session_id)
+    _ensure_attachments(app_id)
+    return {"application_id": app_id, "attachments": DB_APPLICATIONS[app_id]["attachments"]}

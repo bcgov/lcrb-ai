@@ -1,6 +1,9 @@
 from typing import Dict, Any, Optional
+from dotenv import load_dotenv
 import os
 from openai import AzureOpenAI
+
+load_dotenv()
 
 AOAI_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT")
 AOAI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY")

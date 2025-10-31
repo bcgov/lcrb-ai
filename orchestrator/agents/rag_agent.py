@@ -1,3 +1,4 @@
+from dotenv import load_dotenv
 import os
 from typing import Optional, Dict, Any
 
@@ -8,6 +9,8 @@ from azure.core.credentials import AzureKeyCredential
 import httpx
 
 # --- Config (env) ---
+load_dotenv()
+
 AOAI_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT")
 AOAI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY")
 AOAI_API_VERSION = os.getenv("AZURE_OPENAI_API_VERSION")
