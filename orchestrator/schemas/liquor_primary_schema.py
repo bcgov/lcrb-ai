@@ -43,7 +43,7 @@ FIELD_SCHEMA = [
     # Land / zoning
     {
         "id": "isOnINLand",
-        "label": "Treaty First Nation Land?",
+        "label": "Is the proposed establishment on Treaty First Nation Land?",
         "type": "boolean",
         "required": False
     },
@@ -213,7 +213,7 @@ FIELD_SCHEMA = [
     # Ownership details (required booleans)
     {
         "id": "isOwner",
-        "label": "Ownership: I am the owner",
+        "label": "Ownership Declaration",
         "type": "boolean",
         "required": True
     },
