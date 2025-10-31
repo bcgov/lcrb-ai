@@ -95,7 +95,9 @@ async def chat(turn: ChatTurn):
         if routing["intent"] == "NAV_DASHBOARD":
             ctas = [{"label": "Go to Dashboard", "routerLink": ["/dashboard"]}]
         elif routing["intent"] == "NAV_ACCOUNT":
-            ctas = [{"label": "Account Settings", "routerLink": ["/account"]}]
+            ctas = [{"label": "Account Settings", "routerLink": ["/account-profile"]}]
+        elif routing["intent"] == "NAV_LICENCES":
+            ctas = [{"label": "Licences Dashboard", "routerLink": ["/licences"]}]
         return {
             "intent": routing["intent"],
             "confidence": routing["confidence"],
@@ -162,6 +164,17 @@ async def chat(turn: ChatTurn):
                 {"label": "Upload floorplan"}
             ]
         }
+    
+    if routing["intent"] == "RENEWALS":
+        return {
+            "intent": "RENEWALS",
+            "confidence": routing["confidence"],
+            "entities": routing.get("entities", {}),
+            "state": state,
+            "message": "You do not have any licenses that are eligible for renewal. Your licence for Jo's Kitchen expires on Oct 30, 2026. *sample response",
+            "ctas": [{"label": "Go to Licences Dashboard", "routerLink": ["/licences"]}]
+        }
+
 
 
     return {

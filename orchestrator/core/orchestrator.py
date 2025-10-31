@@ -77,8 +77,12 @@ class Orchestrator:
             return {"intent": "NAV_DASHBOARD", "confidence": 0.9, "entities": {}}
         if any(k in t for k in ["account", "settings", "profile"]):
             return {"intent": "NAV_ACCOUNT", "confidence": 0.9, "entities": {}}
+        if any(k in t for k in ["licences", "licences dashboard", "licences and authorizations"]):
+            return {"intent": "NAV_LICENCES", "confidence": 0.9, "entities": {}}
         if any(k in t for k in ["next field", "what's next", "next step", "next required"]):
             return {"intent": "NEXT_FIELD", "confidence": 0.9, "entities": {}}
+        if any(k in t for k in ["renewal", "renewals", "expiring licence", "expires", "upcoming renewals"]):
+            return {"intent": "RENEWALS", "confidence": 0.90, "entities": {}}
 
         llm = _classify_with_llm(text)
         if llm and llm.get("confidence", 0.0) >= FALLBACK_THRESHOLD:
