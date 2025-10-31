@@ -2,6 +2,36 @@
 
 FIELD_SCHEMA = [
     {
+        "id": "centralSecuritiesRegister",
+        "label": "Central Securities Register (shareholder register)",
+        "type": "file",
+        "required": False
+    },
+    {
+        "id": "supportingBusinessForms",
+        "label": "Supporting Business Forms",
+        "type": "file",
+        "required": False
+    },
+    {
+        "id": "noticeOfArticles",
+        "label": "Notice of Articles (or Register of Directors and Officers)",
+        "type": "file",
+        "required": False
+    },
+    {
+        "id": "personalHistorySummary",
+        "label": "Personal History Summary Documents",
+        "type": "file",
+        "required": False
+    },
+    {
+        "id": "listOfShareholders",
+        "label": "Shareholders (individuals) Holding Less Than 10% Interest (or Non-Voting Shareholders)",
+        "type": "file",
+        "required": False
+    },
+    {
         "id": "establishmentName",
         "label": "Proposed Establishment Name",
         "type": "string",
@@ -49,12 +79,31 @@ FIELD_SCHEMA = [
     },
     {
         "id": "isPermittedInZoning",
-        "label": "Zoning Declaration",
+        "label": "Affirm Zoning Declaration",
         "type": "boolean",
         "required": False
     },
-
-    # Contacts (establishment)
+    {
+        "id": "letterOfIntent",
+        "label": "Letter of Intent",
+        "type": "file",
+        "required": False
+    },
+    
+    # LG / Police (store IDs if known; accept plain text labels too)
+    {
+        "id": "indigenousNation",
+        "label": "Local Government / Indigenous Nation",
+        "type": "string",
+        "required": False
+    },
+    {
+        "id": "policeJurisdiction",
+        "label": "Police Jurisdiction",
+        "type": "string",
+        "required": False
+    },
+        # Contacts (establishment)
     {
         "id": "establishmentEmail",
         "label": "Establishment Contact Email",
@@ -68,54 +117,47 @@ FIELD_SCHEMA = [
         "required": False
     },
 
-    # LG / Police (store IDs if known; accept plain text labels too)
-    {
-        "id": "indigenousNationId",
-        "label": "Local Government / Indigenous Nation (ID)",
-        "type": "string",
-        "required": False
-    },
-    {
-        "id": "indigenousNationName",
-        "label": "Local Government / Indigenous Nation (Name)",
-        "type": "string",
-        "required": False
-    },
-    {
-        "id": "policeJurisdictionId",
-        "label": "Police Jurisdiction (ID)",
-        "type": "string",
-        "required": False
-    },
-    {
-        "id": "policeJurisdictionName",
-        "label": "Police Jurisdiction (Name)",
-        "type": "string",
-        "required": False
-    },
-
     # Patio (ignore sub-fields for demo)
     {
         "id": "isHasPatio",
-        "label": "Will have patio?",
+        "label": "Will the establishment have a patio?",
         "type": "boolean",
         "required": False
     },
 
     # Establishment Type (Angular note: LP uses description1 for Establishment Type)
     {
-        "id": "description1",
+        "id": "establishmentType",
         "label": "Establishment Type",
         "type": "string",
         "required": True
     },
-
-    # Occupant Load
+        # Occupant Load
     {
         "id": "totalOccupantLoad",
         "label": "Total Occupant Load",
         "type": "number",
         "required": True
+    },
+    {
+        "id": "signageDocuments",
+        "label": "Photos or renderings of the establishment's signage",
+        "type": "file",
+        "required": False,
+    },
+
+    {
+        "id": "floorPlan",
+        "label": "Floor Plan",
+        "type": "file",
+        "required": True,
+    },
+
+    {
+        "id": "sitePlan",
+        "label": "Site Plan Documents",
+        "type": "file",
+        "required": False,
     },
 
     # Service hours (keep 7-day open/close; optional in demo)
@@ -203,32 +245,6 @@ FIELD_SCHEMA = [
         "type": "string",
         "required": False
     },
-    {
-        "id": "requestOutsideServiceHours",
-        "label": "Request Outside Service Hours",
-        "type": "boolean",
-        "required": False
-    },
-
-    # Ownership details (required booleans)
-    {
-        "id": "isOwner",
-        "label": "Ownership Declaration",
-        "type": "boolean",
-        "required": True
-    },
-    {
-        "id": "hasValidInterest",
-        "label": "Has valid interest",
-        "type": "boolean",
-        "required": True
-    },
-    {
-        "id": "willHaveValidInterest",
-        "label": "Will have valid interest",
-        "type": "boolean",
-        "required": True
-    },
 
     # Application contact (required)
     {
@@ -265,13 +281,13 @@ FIELD_SCHEMA = [
     # Declarations
     {
         "id": "authorizedToSubmit",
-        "label": "Authorized to submit",
+        "label": "Affirm authorization to submit",
         "type": "boolean",
         "required": True
     },
     {
-        "id": "signatureAgreement",
-        "label": "Declarations",
+        "id": "isOwner",
+        "label": "Affirm ownership details",
         "type": "boolean",
         "required": True
     }

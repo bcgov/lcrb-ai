@@ -7,7 +7,7 @@ from typing import Optional, Any
 from orchestrator.core.store import get_state, DB_APPLICATIONS
 from orchestrator.core.orchestrator import Orchestrator
 from orchestrator.agents import rag_agent
-from orchestrator.agents.applications.liquor_primary_agent import create_draft, get_required_fields, upsert_field, review, compute_fees, submit
+from orchestrator.agents.applications.liquor_primary_agent import create_draft, get_required_fields, upsert_field, review, compute_fees, submit, SLOT_MAP
 from orchestrator.agents.applications.screening import screen
 # from orchestrator.clients.portal_api import PortalApi
 # from flask import request
@@ -37,27 +37,40 @@ def _ensure_attachments(app_id: str):
 
 def _compute_next_field(app_id: str):
     fields = get_required_fields(app_id)
-    rev = review(app_id)
-    form_ids = {f["id"] for f in fields}
-    target = next((m for m in rev.get("missing", []) if m in form_ids), None)
-    if not target:
-        data = DB_APPLICATIONS[app_id].get("data", {})
-        for f in fields:
-            if f.get("required", True):
-                val = data.get(f["id"]); t = f.get("type")
-                if t == "boolean":
-                    if f.get("required_true", False):
-                        if val is not True: target = f["id"]; break
-                    elif val is None: target = f["id"]; break
-                elif t == "number":
-                    if val in (None, ""): target = f["id"]; break
-                else:
-                    if val is None or (isinstance(val, str) and not val.strip()): target = f["id"]; break
-    if not target: return None
+    data = DB_APPLICATIONS[app_id].get("data", {})
+    atts = DB_APPLICATIONS[app_id].get("attachments", []) or []
+    present_slots = {a.get("slot") for a in atts}
+
     for f in fields:
-        if f["id"] == target:
-            return {"id": f["id"], "label": f.get("label"), "type": f.get("type"),
-                    "required": f.get("required", True), "help": f.get("help_ref")}
+        fid = f["id"]; t = f.get("type")
+
+        if t == "file":
+            slot = SLOT_MAP.get(fid)
+            if slot and slot not in present_slots:
+                return {
+                    "id": fid,
+                    "label": f.get("label"),
+                    "type": "file",
+                    "required": f.get("required", False),
+                    "help": f.get("help_ref")
+                }
+            continue
+
+        if f.get("required", True):
+            val = data.get(fid)
+            if t == "boolean":
+                if f.get("required_true", False):
+                    if val is not True:
+                        return {"id": fid, "label": f.get("label"), "type": t, "required": True, "help": f.get("help_ref")}
+                elif val is None:
+                    return {"id": fid, "label": f.get("label"), "type": t, "required": True, "help": f.get("help_ref")}
+            elif t == "number":
+                if val in (None, ""):
+                    return {"id": fid, "label": f.get("label"), "type": t, "required": True, "help": f.get("help_ref")}
+            else:
+                if val is None or (isinstance(val, str) and not val.strip()):
+                    return {"id": fid, "label": f.get("label"), "type": t, "required": True, "help": f.get("help_ref")}
+
     return None
 
 
@@ -120,7 +133,7 @@ async def chat(turn: ChatTurn):
             }
         rev = review(app_id)
         next_field = _compute_next_field(app_id)
-        return {
+        res =  {
             "intent": "NEXT_FIELD",
             "confidence": routing["confidence"],
             "entities": routing.get("entities", {}),
@@ -130,6 +143,9 @@ async def chat(turn: ChatTurn):
             "next_field": next_field,
             "application_id": app_id
         }
+        if next_field is None and not rev.get("missing"):
+            res.setdefault("ctas", []).append({"label": "Submit Application"})
+        return resp
 
     if routing["intent"] == "START_APPLICATION":
         state["selected_business_id"] = state.get("selected_business_id") or "B1"
@@ -281,3 +297,10 @@ async def list_attachments(session_id: str):
     app_id = _ensure_app(session_id)
     _ensure_attachments(app_id)
     return {"application_id": app_id, "attachments": DB_APPLICATIONS[app_id]["attachments"]}
+
+@app.post("/validate/floorplan")
+async def validate_floorplan(file: UploadFile = File(...)):
+    content = await file.read()
+    s = screen("N/A", file.filename, content) or {}
+    return {"passed": bool(s.get("passed")), "reasons": [i.get("message") for i in (s.get("issues") or [])]}
+

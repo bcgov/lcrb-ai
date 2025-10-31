@@ -6,15 +6,30 @@ from datetime import datetime
 from .validator import validate
 import os
 
-REQUIRED_SLOTS = ["floor_plan", "site_plan"]
+REQUIRED_SLOTS = ["floor_plan"]
 OPTIONAL_SLOTS = [
     "central_securities_register",
     "supporting_documents",
+    "notice_of_articles",
     "personal_history_summary",
     "shareholders",
     "letter_of_intent",
-    "signage_documents"
+    "signage_documents",
+    "site_plan"
 ]
+
+# Map schema field ids to slots
+SLOT_MAP = {
+    "centralSecuritiesRegister": "central_securities_register",
+    "supportingBusinessForms": "supporting_documents",
+    "noticeOfArticles": "notice_of_articles",
+    "personalHistorySummary": "personal_history_summary",
+    "listOfShareholders": "shareholders",
+    "letterOfIntent": "letter_of_intent",
+    "signageDocuments": "signage_documents",
+    "floorPlan": "floor_plan",
+    "sitePlan": "site_plan",
+}
 
 def create_draft(business_id: str, app_type="liquor_primary") -> str:
     app_id = f"APP-{len(DB_APPLICATIONS)+1:07d}"
