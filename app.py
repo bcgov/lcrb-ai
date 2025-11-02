@@ -37,42 +37,29 @@ def _ensure_attachments(app_id: str):
 
 def _compute_next_field(app_id: str):
     fields = get_required_fields(app_id)
-    data = DB_APPLICATIONS[app_id].get("data", {})
-    atts = DB_APPLICATIONS[app_id].get("attachments", []) or []
-    present_slots = {a.get("slot") for a in atts}
-
+    fields = [f for f in fields if f.get("type") != "file"]
+    rev = review(app_id)
+    form_ids = {f["id"] for f in fields}
+    target = next((m for m in rev.get("missing", []) if m in form_ids), None)
+    if not target:
+        data = DB_APPLICATIONS[app_id].get("data", {})
+        for f in fields:
+            if f.get("required", True):
+                val = data.get(f["id"]); t = f.get("type")
+                if t == "boolean":
+                    if f.get("required_true", False):
+                        if val is not True: target = f["id"]; break
+                    elif val is None: target = f["id"]; break
+                elif t == "number":
+                    if val in (None, ""): target = f["id"]; break
+                else:
+                    if val is None or (isinstance(val, str) and not val.strip()): target = f["id"]; break
+    if not target: return None
     for f in fields:
-        fid = f["id"]; t = f.get("type")
-
-        if t == "file":
-            slot = SLOT_MAP.get(fid)
-            if slot and slot not in present_slots:
-                return {
-                    "id": fid,
-                    "label": f.get("label"),
-                    "type": "file",
-                    "required": f.get("required", False),
-                    "help": f.get("help_ref")
-                }
-            continue
-
-        if f.get("required", True):
-            val = data.get(fid)
-            if t == "boolean":
-                if f.get("required_true", False):
-                    if val is not True:
-                        return {"id": fid, "label": f.get("label"), "type": t, "required": True, "help": f.get("help_ref")}
-                elif val is None:
-                    return {"id": fid, "label": f.get("label"), "type": t, "required": True, "help": f.get("help_ref")}
-            elif t == "number":
-                if val in (None, ""):
-                    return {"id": fid, "label": f.get("label"), "type": t, "required": True, "help": f.get("help_ref")}
-            else:
-                if val is None or (isinstance(val, str) and not val.strip()):
-                    return {"id": fid, "label": f.get("label"), "type": t, "required": True, "help": f.get("help_ref")}
-
+        if f["id"] == target:
+            return {"id": f["id"], "label": f.get("label"), "type": f.get("type"),
+                    "required": f.get("required", True), "help": f.get("help_ref")}
     return None
-
 
 class ChatTurn(BaseModel):
     session_id: str
@@ -145,7 +132,7 @@ async def chat(turn: ChatTurn):
         }
         if next_field is None and not rev.get("missing"):
             res.setdefault("ctas", []).append({"label": "Submit Application"})
-        return resp
+        return res
 
     if routing["intent"] == "START_APPLICATION":
         state["selected_business_id"] = state.get("selected_business_id") or "B1"

@@ -1,36 +1,36 @@
 # Liquor Primary Application Schema, ids taken from the Angular form controls in ApplicationComponent
 
 FIELD_SCHEMA = [
-    {
-        "id": "centralSecuritiesRegister",
-        "label": "Central Securities Register (shareholder register)",
-        "type": "file",
-        "required": False
-    },
-    {
-        "id": "supportingBusinessForms",
-        "label": "Supporting Business Forms",
-        "type": "file",
-        "required": False
-    },
-    {
-        "id": "noticeOfArticles",
-        "label": "Notice of Articles (or Register of Directors and Officers)",
-        "type": "file",
-        "required": False
-    },
-    {
-        "id": "personalHistorySummary",
-        "label": "Personal History Summary Documents",
-        "type": "file",
-        "required": False
-    },
-    {
-        "id": "listOfShareholders",
-        "label": "Shareholders (individuals) Holding Less Than 10% Interest (or Non-Voting Shareholders)",
-        "type": "file",
-        "required": False
-    },
+    # {
+    #     "id": "centralSecuritiesRegister",
+    #     "label": "CSR",
+    #     "type": "file",
+    #     "required": False
+    # },
+    # {
+    #     "id": "supportingBusinessForms",
+    #     "label": "Supporting Forms",
+    #     "type": "file",
+    #     "required": False
+    # },
+    # {
+    #     "id": "noticeOfArticles",
+    #     "label": "NOA",
+    #     "type": "file",
+    #     "required": False
+    # },
+    # {
+    #     "id": "personalHistorySummary",
+    #     "label": "PHS",
+    #     "type": "file",
+    #     "required": False
+    # },
+    # {
+    #     "id": "listOfShareholders",
+    #     "label": "NV Shareholders",
+    #     "type": "file",
+    #     "required": False
+    # },
     {
         "id": "establishmentName",
         "label": "Proposed Establishment Name",
@@ -83,12 +83,12 @@ FIELD_SCHEMA = [
         "type": "boolean",
         "required": False
     },
-    {
-        "id": "letterOfIntent",
-        "label": "Letter of Intent",
-        "type": "file",
-        "required": False
-    },
+    # {
+    #     "id": "letterOfIntent",
+    #     "label": "LOI",
+    #     "type": "file",
+    #     "required": False
+    # },
     
     # LG / Police (store IDs if known; accept plain text labels too)
     {
@@ -139,26 +139,26 @@ FIELD_SCHEMA = [
         "type": "number",
         "required": True
     },
-    {
-        "id": "signageDocuments",
-        "label": "Photos or renderings of the establishment's signage",
-        "type": "file",
-        "required": False,
-    },
+    # {
+    #     "id": "signageDocuments",
+    #     "label": "Signage",
+    #     "type": "file",
+    #     "required": False,
+    # },
 
-    {
-        "id": "floorPlan",
-        "label": "Floor Plan",
-        "type": "file",
-        "required": True,
-    },
+    # {
+    #     "id": "floorPlan",
+    #     "label": "Floor Plan",
+    #     "type": "file",
+    #     "required": True,
+    # },
 
-    {
-        "id": "sitePlan",
-        "label": "Site Plan Documents",
-        "type": "file",
-        "required": False,
-    },
+    # {
+    #     "id": "sitePlan",
+    #     "label": "Site Plan",
+    #     "type": "file",
+    #     "required": False,
+    # },
 
     # Service hours (keep 7-day open/close; optional in demo)
     {
