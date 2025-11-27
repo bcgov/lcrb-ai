@@ -26,7 +26,7 @@ app.add_middleware(
 )
 
 BASE_DIR = Path(__file__).resolve().parent
-TESTS_DIR = BASE_DIR.parent / "tests"
+TESTS_DIR = BASE_DIR / "tests"
 SAMPLE_FLOORPLAN = TESTS_DIR / "floorplan_sample.pdf"
 
 

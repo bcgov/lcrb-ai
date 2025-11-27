@@ -35,3 +35,23 @@ Invoke-RestMethod "$BASE/application/fees?session_id=$SESSION"
 
 # 8) Submit
 Invoke-RestMethod "$BASE/application/submit?session_id=$SESSION" -Method Post -Form @{ attestation = "true" }
+
+# 9) Check application status (APPLICATION_STATUS intent)
+$respStatus = Invoke-RestMethod "$BASE/chat" -Method Post -ContentType "application/json" -Body (@{
+  session_id     = $SESSION
+  message        = "check my application status"
+  selected_index = $INDEX
+} | ConvertTo-Json)
+
+$respStatus | ConvertTo-Json -Depth 5
+
+
+# 10) Get most recent floorplan (RECENT_FLOORPLAN intent)
+$respFloorplan = Invoke-RestMethod "$BASE/chat" -Method Post -ContentType "application/json" -Body (@{
+  session_id     = $SESSION
+  message        = "show my most recent floorplan"
+  selected_index = $INDEX
+} | ConvertTo-Json)
+
+$respFloorplan | ConvertTo-Json -Depth 5
+

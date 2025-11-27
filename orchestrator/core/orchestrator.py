@@ -69,8 +69,8 @@ class Orchestrator:
 
         if any(k in t for k in ["apply", "start application", "begin liquor primary"]):
             return {"intent": "START_APPLICATION", "confidence": 0.9, "entities": {}}
-        if any(k in t for k in ["upload", "floorplan", "screen"]):
-            return {"intent": "SCREEN_DOCUMENT", "confidence": 0.9, "entities": {}}
+        # if any(k in t for k in ["upload", "floorplan", "screen"]):
+        #     return {"intent": "SCREEN_DOCUMENT", "confidence": 0.9, "entities": {}}
         if any(k in t for k in ["help", "what is", "how do i"]):
             return {"intent": "IN_FORM_HELP", "confidence": 0.8, "entities": {}}
         if any(k in t for k in ["dashboard", "home"]):
