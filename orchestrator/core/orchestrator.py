@@ -83,6 +83,10 @@ class Orchestrator:
             return {"intent": "NEXT_FIELD", "confidence": 0.9, "entities": {}}
         if any(k in t for k in ["renewal", "renewals", "expiring licence", "expires", "upcoming renewals"]):
             return {"intent": "RENEWALS", "confidence": 0.90, "entities": {}}
+        if any(k in t for k in ["application status", "status of my application", "track my application", "my applications", "active applications"]):
+            return {"intent": "APPLICATION_STATUS", "confidence": 0.9, "entities": {}}
+        if any(k in t for k in ["recent floorplan", "latest floorplan", "my floorplan"]):
+            return {"intent": "RECENT_FLOORPLAN", "confidence": 0.9, "entities": {}}
 
         llm = _classify_with_llm(text)
         if llm and llm.get("confidence", 0.0) >= FALLBACK_THRESHOLD:

@@ -1,7 +1,9 @@
 import json
 import os
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Query
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from pathlib import Path
 from pydantic import BaseModel
 from typing import Optional, Any
 from orchestrator.core.store import get_state, DB_APPLICATIONS
@@ -22,6 +24,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+BASE_DIR = Path(__file__).resolve().parent
+TESTS_DIR = BASE_DIR.parent / "tests"
+SAMPLE_FLOORPLAN = TESTS_DIR / "floorplan_sample.pdf"
+
 
 # Helpers
 def _ensure_app(session_id: str) -> str:
@@ -75,7 +82,7 @@ def debug_apps():
     return {"apps": list(DB_APPLICATIONS.keys())}
 
 @app.post("/chat")
-async def chat(turn: ChatTurn):
+async def chat(turn: ChatTurn, request: Request):
     state = get_state(turn.session_id)
     routing = Orchestrator.intent_router(turn.message)
 
@@ -177,8 +184,53 @@ async def chat(turn: ChatTurn):
             "message": "You do not have any licenses that are eligible for renewal. Your licence for Jo's Kitchen expires on Oct 30, 2026. *sample response",
             "ctas": [{"label": "Go to Licences Dashboard", "routerLink": ["/licences"]}]
         }
+    
+    if routing["intent"] == "APPLICATION_STATUS":
+        mock_apps = [
+            {
+                "id": "FP-0001234",
+                "name": "Jo's Kitchen",
+                "type": "Food Primary",
+                "status_code": "APPROVAL_IN_PRINCIPLE",
+                "status_label": "Approval in Principle",
+                "submitted_on": "2025-01-15",
+                "last_updated": "2025-02-10"
+            },
+            {
+                "id": "LP-0000456",
+                "name": "Jo's Bar & Lounge",
+                "type": "Liquor Primary",
+                "status_code": "IN_DRAFT",
+                "status_label": "In Draft",
+                "submitted_on": "2025-02-01",
+                "last_updated": "2025-02-20"
+            }
+        ]
 
+        return {
+            "intent": "APPLICATION_STATUS",
+            "confidence": routing["confidence"],
+            "entities": routing.get("entities", {}),
+            "state": state,
+            "message": "Here are your current applications and their status.",
+            "applications": mock_apps
+        }
+    
+    if routing["intent"] == "RECENT_FLOORPLAN":
+        base_url = str(request.base_url).rstrip("/")
+        url = f"{base_url}/samples/floorplan"
 
+        return {
+            "intent": "RECENT_FLOORPLAN",
+            "confidence": routing["confidence"],
+            "entities": routing.get("entities", {}),
+            "state": state,
+            "message": "Found 1 floorplan. Click on the quick action below to view your latest floorplan. ",
+            "ctas": [
+                {"label": "Open Floorplan", "href": url}
+            ],
+            "floorplan_url": url
+        }
 
     return {
         "intent": routing["intent"],
@@ -291,3 +343,12 @@ async def validate_floorplan(file: UploadFile = File(...)):
     s = screen("N/A", file.filename, content) or {}
     return {"passed": bool(s.get("passed")), "reasons": [i.get("message") for i in (s.get("issues") or [])]}
 
+@app.get("/samples/floorplan")
+async def sample_floorplan():
+    if not SAMPLE_FLOORPLAN.exists():
+        raise HTTPException(status_code=404, detail="Sample floorplan not found.")
+    return FileResponse(
+        SAMPLE_FLOORPLAN,
+        media_type="application/pdf",
+        filename="floorplan_sample.pdf"
+    )

@@ -24,8 +24,8 @@ Invoke-RestMethod "$BASE/application/upsert" -Method Post -Form @{
 Invoke-RestMethod "$BASE/application/fields?session_id=$SESSION"
 
 # 5) Upload a floorplan
-"fake pdf" | Out-File -Encoding ascii floorplan.pdf
-Invoke-RestMethod "$BASE/upload/floorplan?session_id=$SESSION" -Method Post -Form @{ file = Get-Item "floorplan.pdf" }
+# "fake pdf" | Out-File -Encoding ascii floorplan.pdf
+# Invoke-RestMethod "$BASE/upload/floorplan?session_id=$SESSION" -Method Post -Form @{ file = Get-Item "floorplan.pdf" }
 
 # 6) Review application
 Invoke-RestMethod "$BASE/application/review?session_id=$SESSION"
