@@ -11,11 +11,15 @@ from orchestrator.core.orchestrator import Orchestrator
 from orchestrator.agents import rag_agent
 from orchestrator.agents.applications.liquor_primary_agent import create_draft, get_required_fields, upsert_field, review, compute_fees, submit, SLOT_MAP
 from orchestrator.agents.applications.screening import screen
+from orchestrator.routes import feedback
 # from orchestrator.clients.portal_api import PortalApi
 # from flask import request
 
 
 app = FastAPI(title="Orchestrator Agent Service")
+
+# Include feedback router
+app.include_router(feedback.router)
 origins = [o.strip() for o in os.getenv("ALLOWED_ORIGINS", "http://localhost:5000").split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
@@ -29,6 +33,8 @@ BASE_DIR = Path(__file__).resolve().parent
 TESTS_DIR = BASE_DIR / "tests"
 SAMPLE_FLOORPLAN = TESTS_DIR / "floorplan_sample.pdf"
 
+# In-memory feedback storage (will be migrated to CosmosDB)
+DB_FEEDBACK = []
 
 # Helpers
 def _ensure_app(session_id: str) -> str:
