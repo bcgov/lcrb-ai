@@ -1,0 +1,9 @@
+{
+  "routes": [
+    {
+      "route": "/api/search",
+      "allowedMethods": ["OPTIONS", "POST"],
+      "allowedRoles": ["anonymous"]
+    }
+  ]
+}

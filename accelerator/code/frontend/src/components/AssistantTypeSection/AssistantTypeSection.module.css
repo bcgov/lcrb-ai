@@ -1,0 +1,94 @@
+.chatEmptyState {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.chatIcon {
+    height: 70px;
+}
+
+.chatEmptyStateTitle {
+    font-family: inherit;
+    font-style: normal;
+    font-weight: 700;
+    font-size: 36px;
+    display: flex;
+    align-items: flex-end;
+    text-align: center;
+    margin-top: 24px;
+    margin-bottom: 0px;
+}
+
+.chatEmptyStateSubtitle {
+    margin-top: 16px;
+    font-family: inherit;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 16px;
+    line-height: 150%;
+    display: flex;
+    align-items: flex-end;
+    text-align: center;
+    letter-spacing: -0.01em;
+    color: #616161;
+    max-width: 90%;
+}
+
+.dataText {
+    background: linear-gradient(90deg, #464FEB 10.42%, #8330E9 100%);
+    color: transparent;
+    background-clip: text;
+}
+
+.loadingContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh; /* Full viewport height */
+  }
+
+  .loadingIcon {
+    border: 8px solid #f3f3f3; /* Light grey */
+    border-top: 8px solid #3498db; /* Blue */
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+  }
+
+.topicPills {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+  max-width: 80%;
+  justify-content: center;
+  flex-wrap: wrap;
+  overflow-x: visible;
+  white-space: normal;
+}
+
+.pill {
+  font-family: inherit;
+  color: #FFFFFF;
+  padding: 8px;
+  font-size: 15px;
+  border: 1px solid #003366;
+  border-radius: 16px;
+  background: #003366;
+  cursor: pointer;
+  transition: background 0s ease, color 0s ease;
+}
+
+.pill:hover {
+    background: #FFFFFF;
+    color: #003366;
+}
+
+.selectedPill {
+  background: #003366;
+  color: white;
+}

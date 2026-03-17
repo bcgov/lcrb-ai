@@ -1,0 +1,92 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Attach to Python Functions",
+            "type": "python",
+            "request": "attach",
+            "port": 9091,
+            "preLaunchTask": "func: host start"
+        },
+        {
+            "name": "Launch Admin site",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "streamlit",
+            "args": [
+                "run",
+                "Admin.py"
+            ],
+            "cwd": "${workspaceFolder}/code/backend",
+            "preLaunchTask": "poetry install",
+            "envFile": "${input:dotEnvFilePath}",
+        },
+        {
+            "name": "Launch Frontend (api)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "flask",
+            "args": [
+                "--app",
+                "./app.py",
+                "--debug",
+                "run",
+                "--port",
+                "5050"
+            ],
+            "cwd": "${workspaceFolder}/code",
+            "preLaunchTask": "poetry install",
+            "envFile": "${input:dotEnvFilePath}",
+        },
+        {
+            "name": "Launch Frontend (UI)",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/code/frontend",
+            "preLaunchTask": "npm install",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": [
+                "run",
+                "dev"
+            ],
+            "skipFiles": [
+                "node_modules/**"
+            ],
+            "envFile": "${input:dotEnvFilePath}",
+        },
+        {
+            "name": "Debug tests",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "poetry",
+            "args": [
+                "run",
+                "pytest"
+            ],
+            "cwd": "${workspaceFolder}/code",
+            "envFile": "${input:dotEnvFilePath}",
+        },
+        {
+            "name": "Python: Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "justMyCode": true,
+            "envFile": "${input:dotEnvFilePath}",
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Launch Frontend",
+            "configurations": [ "Launch Frontend (UI)", "Launch Frontend (api)" ],
+            "stopAll": true
+        }
+    ],
+    "inputs": [
+        {
+            "id": "dotEnvFilePath",
+            "type": "command",
+            "command": "azure-dev.commands.getDotEnvFilePath"
+        }
+    ]
+}
