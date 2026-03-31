@@ -269,6 +269,30 @@ export const historyDeleteAll = async (): Promise<Response> => {
   return response;
 };
 
+export const historyMessageFeedback = async (
+  messageId: string,
+  conversationId: string,
+  feedbackType: "thumbs_up" | "thumbs_down",
+  assistantMessage: string,
+  userMessage?: string,
+  tags?: string[],
+  details?: string
+): Promise<Response> => {
+  return await fetch("/api/history/feedback", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      message_id: messageId,
+      conversation_id: conversationId,
+      feedback_type: feedbackType,
+      assistant_message: assistantMessage,
+      user_message: userMessage,
+      tags: tags ?? [],
+      details: details ?? "",
+    }),
+  });
+};
+
 export async function getFrontEndSettings(): Promise<FrontEndSettings> {
   try {
     const response = await fetch("/api/history/frontend_settings", {

@@ -1,9 +1,16 @@
 import { useEffect, useMemo, useState, useRef, forwardRef } from "react";
 import { useBoolean } from "@fluentui/react-hooks";
 import { FontIcon, Stack, Text } from "@fluentui/react";
+import {
+  ThumbLike20Regular,
+  ThumbLike20Filled,
+  ThumbDislike20Regular,
+  ThumbDislike20Filled,
+} from "@fluentui/react-icons";
 import styles from "./Answer.module.css";
 import { AskResponse, Citation } from "../../api";
 import { parseAnswer } from "./AnswerParser";
+import { FeedbackModal } from "./FeedbackModal";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import supersub from "remark-supersub";
@@ -25,6 +32,8 @@ interface Props {
   isActive?: boolean;
   index: number;
   onViewSources: (allCitations: Citation[]) => void;
+  onFeedbackSubmit?: (feedback: "thumbs_up" | "thumbs_down" | null, tags?: string[], details?: string) => void;
+  currentFeedback?: string;
 }
 const MyStackComponent = forwardRef<HTMLDivElement, any>((props, ref) => (
   <div {...props} ref={ref} />
@@ -37,6 +46,8 @@ export const Answer = ({
   onSpeak,
   isActive,
   index,
+  onFeedbackSubmit,
+  currentFeedback,
 }: Props) => {
   const [isRefAccordionOpen, { toggle: toggleIsRefAccordionOpen }] =
     useBoolean(false);
@@ -51,6 +62,7 @@ export const Answer = ({
     useState(isRefAccordionOpen);
   const refContainer = useRef<HTMLDivElement>(null);
   const [audioContext, setAudioContext] = useState<AudioContext | null>(null); //Manully  manage the audio context eg pausing resuming
+  const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
 
   const [synthesizerData, setSynthesizerData] = useState({
     key: "",
@@ -311,14 +323,53 @@ export const Answer = ({
             className={styles.answerText}
           />
         </Stack.Item>
-        <Stack horizontal className={styles.answerFooter} verticalAlign="start">
-          <Stack.Item className={styles.answerDisclaimerContainer}>
-            <span
-              className={`${styles.answerDisclaimer} ${styles.mobileAnswerDisclaimer}`}
-            >
-              This information is AI generated and does not constitute legal advice. It may be incomplete or contain errors. Please consult official sources for verification. 
+        <Stack className={styles.answerFooter}>
+          <Stack.Item>
+            <span className={`${styles.answerDisclaimer} ${styles.mobileAnswerDisclaimer}`}>
+              This information is AI generated and does not constitute legal advice. It may be incomplete or contain errors. Please consult official sources for verification.
             </span>
           </Stack.Item>
+          {onFeedbackSubmit && (
+            <Stack.Item>
+              <div className={styles.feedbackRow}>
+                <span className={styles.feedbackLabel}>Was this helpful?</span>
+                <span className={styles.feedbackButtons}>
+                  {(!currentFeedback || currentFeedback === "thumbs_up") && (
+                    <button
+                      title={currentFeedback === "thumbs_up" ? "Remove feedback" : "Good response"}
+                      className={`${styles.feedbackButton} ${currentFeedback === "thumbs_up" ? styles.feedbackButtonActive : ""}`}
+                      aria-pressed={currentFeedback === "thumbs_up"}
+                      onClick={() => onFeedbackSubmit(currentFeedback === "thumbs_up" ? null : "thumbs_up")}
+                    >
+                      {currentFeedback === "thumbs_up" ? <ThumbLike20Filled /> : <ThumbLike20Regular />}
+                    </button>
+                  )}
+                  {(!currentFeedback || currentFeedback === "thumbs_down") && (
+                    <button
+                      title={currentFeedback === "thumbs_down" ? "Remove feedback" : "Poor response"}
+                      className={`${styles.feedbackButton} ${currentFeedback === "thumbs_down" ? styles.feedbackButtonActive : ""}`}
+                      aria-pressed={currentFeedback === "thumbs_down"}
+                      onClick={() => {
+                        if (currentFeedback === "thumbs_down") {
+                          onFeedbackSubmit(null);
+                        } else {
+                          setFeedbackModalOpen(true);
+                        }
+                      }}
+                    >
+                      {currentFeedback === "thumbs_down" ? <ThumbDislike20Filled /> : <ThumbDislike20Regular />}
+                    </button>
+                  )}
+                </span>
+                {currentFeedback && (
+                  <span className={styles.feedbackConfirmation}>
+                    Thank you for your feedback!
+                  </span>
+                )}
+              </div>
+            </Stack.Item>
+          )}
+        </Stack>
 
           {/* {!!parsedAnswer.citations.length && (
             <Stack.Item aria-label="References">
@@ -356,7 +407,6 @@ export const Answer = ({
               </Stack>
             </Stack.Item>
           )} */}
-        </Stack>
         {/* {chevronIsExpanded && (
           <div
             data-testid="citations-container"
@@ -396,6 +446,15 @@ export const Answer = ({
           </div>
         )} */}
         {/* <Stack.Item>{getSpeechButtons()}</Stack.Item> */}
+        {feedbackModalOpen && onFeedbackSubmit && (
+          <FeedbackModal
+            onSubmit={(tags, details) => {
+              setFeedbackModalOpen(false);
+              onFeedbackSubmit("thumbs_down", tags, details);
+            }}
+            onDismiss={() => setFeedbackModalOpen(false)}
+          />
+        )}
         {!!parsedAnswer.citations.length && (
           <Stack.Item>
             <Text

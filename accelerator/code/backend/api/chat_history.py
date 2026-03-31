@@ -1,5 +1,7 @@
 import os
+import time
 import logging
+import requests as http_requests
 from uuid import uuid4
 from dotenv import load_dotenv
 from flask import request, jsonify, Blueprint
@@ -453,6 +455,45 @@ async def update_conversation():
     except Exception as e:
         logger.exception(f"Exception in /history/update: {e}")
         return jsonify({"error": "Error while updating the conversation history"}), 500
+
+
+@bp_chat_history_response.route("/history/feedback", methods=["POST"])
+def submit_message_feedback():
+    """
+    Proxy feedback from the accelerator chat UI to the orchestrator's unified
+    feedback endpoint so all feedback lands in one CosmosDB container.
+
+    Expects JSON body:
+        conversation_id   str   Maps to session_id in the orchestrator schema
+        message_id        str   DB message ID for the specific assistant response
+        feedback_type     str   "thumbs_up" or "thumbs_down"
+        assistant_message str   Content of the rated assistant message
+        user_message      str   (optional) Preceding user message
+    """
+    orchestrator_url = os.getenv("ORCHESTRATOR_API_URL", "http://localhost:8000")
+
+    try:
+        body = request.get_json(silent=True) or {}
+        payload = {
+            "session_id": body.get("conversation_id", ""),
+            "message_id": body.get("message_id"),
+            "feedback_type": body.get("feedback_type", ""),
+            "assistant_message": body.get("assistant_message", ""),
+            "user_message": body.get("user_message"),
+            "source_app": "accelerator",
+            "timestamp": int(time.time() * 1000),
+        }
+
+        resp = http_requests.post(
+            f"{orchestrator_url}/feedback",
+            json=payload,
+            timeout=5,
+        )
+        return jsonify(resp.json()), resp.status_code
+
+    except Exception as e:
+        logger.exception("Failed to forward feedback to orchestrator: %s", e)
+        return jsonify({"ok": False, "error": "Could not record feedback"}), 500
 
 
 @bp_chat_history_response.route("/history/frontend_settings", methods=["GET"])

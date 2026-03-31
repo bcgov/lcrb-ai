@@ -17,6 +17,7 @@ export type ChatMessageContainerProps = {
   handleSpeech: any;
   onShowCitation: (citedDocument: Citation) => void;
   onViewSources: (all: Citation[]) => void;
+  onFeedbackSubmit?: (messageId: string, feedback: "thumbs_up" | "thumbs_down" | null, tags?: string[], details?: string) => void;
 };
 
 const parseCitationFromMessage = (message: ChatMessage) => {
@@ -40,7 +41,8 @@ export const ChatMessageContainer: React.FC<ChatMessageContainerProps> = (
     handleSpeech,
     activeCardIndex,
     onShowCitation,
-    onViewSources
+    onViewSources,
+    onFeedbackSubmit,
   } = props;
   return (
     <Fragment>
@@ -83,6 +85,12 @@ export const ChatMessageContainer: React.FC<ChatMessageContainerProps> = (
                   onCitationClicked={(c) => onShowCitation(c)}
                   onViewSources={onViewSources}
                   index={index}
+                  onFeedbackSubmit={
+                    onFeedbackSubmit && answer.role === ASSISTANT
+                      ? (fb, tags, details) => onFeedbackSubmit(answer.id, fb, tags, details)
+                      : undefined
+                  }
+                  currentFeedback={answer.feedback}
                 />
               </div>
             ) : null}

@@ -1,0 +1,128 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 20px 24px;
+  width: 440px;
+  max-width: 90vw;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #201f1e;
+}
+
+.closeButton {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  color: #605e5c;
+  display: flex;
+  align-items: center;
+  transition: background 0.12s;
+}
+
+.closeButton:hover {
+  background: #f3f2f1;
+  color: #323130;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tag {
+  border: 1px solid #d1d1d1;
+  background: transparent;
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  color: #323130;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+
+.tag:hover {
+  background: #f3f2f1;
+  border-color: #a8a8a8;
+}
+
+.tagSelected {
+  background: #eff6fc;
+  border-color: #0078d4;
+  color: #0078d4;
+  font-weight: 500;
+}
+
+.textarea {
+  width: 100%;
+  border: 1px solid #d1d1d1;
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: #323130;
+  font-family: inherit;
+  resize: vertical;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.12s;
+}
+
+.textarea:focus {
+  border-color: #0078d4;
+}
+
+.textarea::placeholder {
+  color: #a19f9d;
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.submitButton {
+  background: #0078d4;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.submitButton:hover {
+  background: #106ebe;
+}
+
+.submitButton:active {
+  background: #005a9e;
+}

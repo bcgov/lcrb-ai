@@ -200,6 +200,58 @@ sup {
     line-height: 10px;
 }
 
+.feedbackRow {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    margin-left: 10px;
+    margin-top: 2px;
+    padding-bottom: 6px;
+    flex-wrap: wrap;
+}
+
+.feedbackLabel {
+    font-size: 12px;
+    color: #707070;
+    user-select: none;
+}
+
+.feedbackButtons {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 2px;
+}
+
+.feedbackButton {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    color: #707070;
+    transition: background 0.15s, color 0.15s;
+}
+
+.feedbackButton:hover {
+    background: #f0f0f0;
+    color: #323130;
+}
+
+.feedbackButtonActive {
+    background: #eff6fc;
+    color: #0078d4;
+}
+
+.feedbackConfirmation {
+    font-size: 12px;
+    color: #107c10;
+    margin-left: 4px;
+}
+
 
 
 

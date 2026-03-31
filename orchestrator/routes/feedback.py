@@ -1,26 +1,110 @@
-from fastapi import APIRouter, HTTPException, Query
-from typing import List, Optional
+import uuid
+import logging
 from datetime import datetime
+from typing import Optional
+
+from fastapi import APIRouter, Query
+
 from orchestrator.schemas.feedback_schema import FeedbackSubmission, FeedbackResponse
+from orchestrator.clients.cosmos_feedback_client import get_feedback_client
 from orchestrator.core.store import DB_FEEDBACK
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/feedback", tags=["feedback"])
 
+
+# ---------------------------------------------------------------------------
+# Helpers — write/read via CosmosDB when available, otherwise in-memory
+# ---------------------------------------------------------------------------
+
+async def _store(record: dict) -> None:
+    client = get_feedback_client()
+    if client:
+        await client.upsert(record)
+    else:
+        DB_FEEDBACK.append(record)
+
+
+async def _query(
+    session_id: Optional[str],
+    feedback_type: Optional[str],
+    source_app: Optional[str],
+    limit: int,
+    skip: int,
+):
+    client = get_feedback_client()
+    if client:
+        return await client.query(
+            session_id=session_id,
+            feedback_type=feedback_type,
+            source_app=source_app,
+            limit=limit,
+            skip=skip,
+        )
+
+    # In-memory fallback
+    results = DB_FEEDBACK.copy()
+    if session_id:
+        results = [f for f in results if f.get("session_id") == session_id]
+    if feedback_type:
+        results = [f for f in results if f.get("feedback_type") == feedback_type]
+    if source_app:
+        results = [f for f in results if f.get("source_app") == source_app]
+    results.sort(key=lambda x: x.get("timestamp", 0), reverse=True)
+    total = len(results)
+    return results[skip: skip + limit], total
+
+
+async def _stats() -> dict:
+    client = get_feedback_client()
+    if client:
+        return await client.get_stats()
+
+    # In-memory fallback
+    thumbs_up = sum(1 for f in DB_FEEDBACK if f.get("feedback_type") == "thumbs_up")
+    thumbs_down = sum(1 for f in DB_FEEDBACK if f.get("feedback_type") == "thumbs_down")
+    total = len(DB_FEEDBACK)
+    satisfaction = round(thumbs_up / total * 100, 2) if total > 0 else 0
+    return {
+        "total_feedback": total,
+        "thumbs_up": thumbs_up,
+        "thumbs_down": thumbs_down,
+        "satisfaction_rate": satisfaction,
+        "by_intent": _intent_stats_from_memory(),
+    }
+
+
+def _intent_stats_from_memory() -> dict:
+    intent_stats: dict = {}
+    for feedback in DB_FEEDBACK:
+        intent = feedback.get("intent") or "unknown"
+        intent_stats.setdefault(intent, {"thumbs_up": 0, "thumbs_down": 0, "total": 0})
+        intent_stats[intent]["total"] += 1
+        if feedback.get("feedback_type") == "thumbs_up":
+            intent_stats[intent]["thumbs_up"] += 1
+        elif feedback.get("feedback_type") == "thumbs_down":
+            intent_stats[intent]["thumbs_down"] += 1
+    return intent_stats
+
+
+# ---------------------------------------------------------------------------
+# Endpoints
+# ---------------------------------------------------------------------------
 
 @router.post("", response_model=FeedbackResponse)
 async def submit_feedback(feedback: FeedbackSubmission):
     """
     Submit feedback (thumbs up/down) for an AI assistant response.
 
-    This endpoint stores user feedback on assistant messages for analysis and improvement.
-    When migrating to CosmosDB, this will write to a feedback container.
+    Accepts submissions from any source app — the orchestrator itself, the
+    accelerator portal, or future channels — and writes to the unified
+    CosmosDB feedback container (falls back to in-memory when not configured).
     """
-    # Generate a unique feedback ID
-    feedback_id = f"feedback-{len(DB_FEEDBACK) + 1}-{feedback.timestamp}"
+    feedback_id = str(uuid.uuid4())
 
-    # Create feedback record
-    feedback_record = {
+    record = {
         "id": feedback_id,
+        "type": "feedback",
         "session_id": feedback.session_id,
         "feedback_type": feedback.feedback_type,
         "assistant_message": feedback.assistant_message,
@@ -28,92 +112,35 @@ async def submit_feedback(feedback: FeedbackSubmission):
         "intent": feedback.intent,
         "timestamp": feedback.timestamp,
         "created_at": datetime.utcnow().isoformat(),
+        "message_id": feedback.message_id,
+        "source_app": feedback.source_app,
     }
 
-    # Store in memory (will be CosmosDB)
-    DB_FEEDBACK.append(feedback_record)
+    await _store(record)
 
-    return FeedbackResponse(
-        ok=True,
-        feedback_id=feedback_id,
-        message="Feedback recorded successfully"
-    )
+    return FeedbackResponse(ok=True, feedback_id=feedback_id)
 
 
 @router.get("")
 async def get_feedback(
-    session_id: Optional[str] = Query(None, description="Filter by session ID"),
-    feedback_type: Optional[str] = Query(None, description="Filter by type: thumbs_up or thumbs_down"),
-    limit: int = Query(100, description="Maximum number of records to return"),
-    skip: int = Query(0, description="Number of records to skip (for pagination)")
+    session_id: Optional[str] = Query(None),
+    feedback_type: Optional[str] = Query(None),
+    source_app: Optional[str] = Query(None),
+    limit: int = Query(100),
+    skip: int = Query(0),
 ):
-    """
-    Retrieve feedback records for analysis.
-
-    Returns all feedback or filtered by session_id/feedback_type.
-    Supports pagination via limit and skip parameters.
-    """
-    # Start with all feedback
-    results = DB_FEEDBACK.copy()
-
-    # Apply filters
-    if session_id:
-        results = [f for f in results if f.get("session_id") == session_id]
-
-    if feedback_type:
-        results = [f for f in results if f.get("feedback_type") == feedback_type]
-
-    # Sort by timestamp (newest first)
-    results.sort(key=lambda x: x.get("timestamp", 0), reverse=True)
-
-    # Apply pagination
-    total = len(results)
-    results = results[skip:skip + limit]
-
-    return {
-        "feedback": results,
-        "total": total,
-        "returned": len(results),
-        "skip": skip,
-        "limit": limit
-    }
+    """Retrieve feedback records, optionally filtered by session, type, or source app."""
+    results, total = await _query(
+        session_id=session_id,
+        feedback_type=feedback_type,
+        source_app=source_app,
+        limit=limit,
+        skip=skip,
+    )
+    return {"feedback": results, "total": total, "returned": len(results), "skip": skip, "limit": limit}
 
 
 @router.get("/stats")
 async def get_feedback_stats():
-    """
-    Get aggregate statistics on feedback.
-
-    Returns counts of thumbs up/down and overall satisfaction metrics.
-    """
-    thumbs_up = len([f for f in DB_FEEDBACK if f.get("feedback_type") == "thumbs_up"])
-    thumbs_down = len([f for f in DB_FEEDBACK if f.get("feedback_type") == "thumbs_down"])
-    total = len(DB_FEEDBACK)
-
-    satisfaction_rate = (thumbs_up / total * 100) if total > 0 else 0
-
-    return {
-        "total_feedback": total,
-        "thumbs_up": thumbs_up,
-        "thumbs_down": thumbs_down,
-        "satisfaction_rate": round(satisfaction_rate, 2),
-        "by_intent": _get_feedback_by_intent()
-    }
-
-
-def _get_feedback_by_intent():
-    """Helper to aggregate feedback by intent"""
-    intent_stats = {}
-
-    for feedback in DB_FEEDBACK:
-        intent = feedback.get("intent") or "unknown"
-        if intent not in intent_stats:
-            intent_stats[intent] = {"thumbs_up": 0, "thumbs_down": 0, "total": 0}
-
-        intent_stats[intent]["total"] += 1
-        if feedback.get("feedback_type") == "thumbs_up":
-            intent_stats[intent]["thumbs_up"] += 1
-        elif feedback.get("feedback_type") == "thumbs_down":
-            intent_stats[intent]["thumbs_down"] += 1
-
-    return intent_stats
+    """Aggregate feedback statistics, broken down by intent and source app."""
+    return await _stats()

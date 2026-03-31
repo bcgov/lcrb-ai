@@ -23,6 +23,8 @@ import {
   historyDeleteAll,
   historyRead,
   getFrontEndSettings,
+  historyMessageFeedback,
+  Feedback,
 } from "../../api";
 import { Answer } from "../../components/Answer";
 import { QuestionInput } from "../../components/QuestionInput";
@@ -100,6 +102,51 @@ const Chat = () => {
   const [userFirstName, setUserFirstName] = useState("");
 
 
+  const handleFeedbackSubmit = async (
+    messageId: string,
+    feedbackType: "thumbs_up" | "thumbs_down" | null,
+    tags?: string[],
+    details?: string
+  ) => {
+    if (!feedbackType) {
+      // Deselect: clear local state only, no API call
+      setAnswers((prev) =>
+        prev.map((a) => a.id === messageId ? { ...a, feedback: undefined } : a)
+      );
+      return;
+    }
+
+    const msgIndex = answers.findIndex((a) => a.id === messageId);
+    if (msgIndex === -1) return;
+
+    const assistantMessage = answers[msgIndex];
+    const prevUserMessage = [...answers]
+      .slice(0, msgIndex)
+      .reverse()
+      .find((a) => a.role === "user");
+
+    try {
+      await historyMessageFeedback(
+        messageId,
+        conversationId,
+        feedbackType,
+        assistantMessage.content,
+        prevUserMessage?.content,
+        tags,
+        details
+      );
+      setAnswers((prev) =>
+        prev.map((a) =>
+          a.id === messageId
+            ? { ...a, feedback: feedbackType === "thumbs_up" ? Feedback.Positive : Feedback.Negative }
+            : a
+        )
+      );
+    } catch (e) {
+      console.error("Failed to submit feedback", e);
+    }
+  };
+
   const saveToDB = async (messages: ChatMessage[], convId: string) => {
     if (!convId || !messages.length) {
       return;
@@ -162,6 +209,35 @@ const Chat = () => {
       id: uuidv4(),
       date: new Date().toISOString(),
     };
+
+    // ── Mock mode: bypass the backend entirely ──────────────────────────────
+    if (import.meta.env.VITE_MOCK_MODE === "true") {
+      await new Promise((r) => setTimeout(r, 800)); // simulate network delay
+      const mockAnswer: ChatMessage = {
+        role: "assistant",
+        id: uuidv4(),
+        date: new Date().toISOString(),
+        content: `Thank you for your question about **due diligence** under BC liquor and cannabis regulations.
+
+When a licensee faces an enforcement action, a successful due diligence defence requires demonstrating:
+
+1. **A proper system was in place** — The licensee had written policies, staff training schedules, and procedures designed to prevent the contravention.
+2. **The system was actively followed** — Management regularly monitored compliance and documented corrective actions.
+3. **Reasonable steps were taken** — All reasonable precautions were exercised in the circumstances.
+
+> *Section 20 of the Liquor Control and Licensing Act* places the burden on the licensee to show they took all reasonable steps to prevent the violation. [doc1]
+
+The BC Liquor and Cannabis Regulation Branch has published enforcement guidelines outlining the factors considered when assessing due diligence. These include the nature of the violation, the licensee's compliance history, and the quality of their compliance program. [doc2]
+
+*This information is for general guidance only and does not constitute legal advice.*`,
+      };
+      setAnswers((prev) => [...prev, userMessage, mockAnswer]);
+      setShowLoadingMessage(false);
+      setIsGenerating(false);
+      abortFuncs.current = abortFuncs.current.filter((a) => a !== abortController);
+      return;
+    }
+    // ────────────────────────────────────────────────────────────────────────
 
     const request: ConversationRequest = {
       id: selectedConvId || conversationId,
@@ -606,7 +682,7 @@ const Chat = () => {
                   handleSpeech={handleSpeech}
                   onShowCitation={onShowCitation}
                   onViewSources={handleViewSources}
-
+                  onFeedbackSubmit={handleFeedbackSubmit}
                 />
                 {showLoadingMessage && loadingMessageBlock()}
                 <div data-testid="streamendref-id" ref={chatMessageStreamEnd} />

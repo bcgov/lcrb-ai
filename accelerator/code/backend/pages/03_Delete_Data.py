@@ -26,7 +26,7 @@ def load_css(file_path):
 
 
 # Load the common CSS
-load_css("pages/common.css")
+load_css(os.path.join(os.path.dirname(__file__), "common.css"))
 
 
 # CSS to inject contained in a string
