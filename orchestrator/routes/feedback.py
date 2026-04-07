@@ -114,6 +114,8 @@ async def submit_feedback(feedback: FeedbackSubmission):
         "created_at": datetime.utcnow().isoformat(),
         "message_id": feedback.message_id,
         "source_app": feedback.source_app,
+        "tags": feedback.tags or [],
+        "details": feedback.details or "",
     }
 
     await _store(record)

@@ -26,7 +26,7 @@ logger.debug("Starting admin app")
 
 st.set_page_config(
     page_title="Admin",
-    page_icon=os.path.join("images", "favicon.ico"),
+    page_icon=os.path.join(os.path.dirname(__file__), "images", "favicon.ico"),
     layout="wide",
     menu_items=None,
 )
@@ -38,7 +38,7 @@ def load_css(file_path):
 
 
 # Load the common CSS
-load_css("pages/common.css")
+load_css(os.path.join(os.path.dirname(__file__), "pages", "common.css"))
 
 
 col1, col2, col3 = st.columns([1, 2, 1])

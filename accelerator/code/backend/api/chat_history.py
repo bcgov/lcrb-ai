@@ -482,6 +482,8 @@ def submit_message_feedback():
             "user_message": body.get("user_message"),
             "source_app": "accelerator",
             "timestamp": int(time.time() * 1000),
+            "tags": body.get("tags", []),
+            "details": body.get("details", ""),
         }
 
         resp = http_requests.post(

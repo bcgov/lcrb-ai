@@ -13,6 +13,8 @@ class FeedbackSubmission(BaseModel):
     # Enrichment fields — populated by proxying apps
     message_id: Optional[str] = None   # DB message ID from the source app
     source_app: Optional[str] = None   # e.g. "accelerator", "orchestrator"
+    tags: Optional[list] = None        # reason tags from thumbs-down modal
+    details: Optional[str] = None      # optional free-text from thumbs-down modal
 
 
 class FeedbackResponse(BaseModel):

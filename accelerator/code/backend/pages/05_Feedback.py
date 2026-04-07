@@ -195,6 +195,8 @@ if records:
                 "Session ID": r.get("session_id", ""),
                 "User message": (r.get("user_message") or "")[:120],
                 "Assistant message": (r.get("assistant_message") or "")[:200],
+                "Tags": ", ".join(r.get("tags") or []),
+                "Details": (r.get("details") or ""),
             }
         )
     st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
