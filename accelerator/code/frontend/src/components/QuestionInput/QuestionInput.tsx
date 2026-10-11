@@ -39,7 +39,6 @@ export const QuestionInput = ({
   const [liveRecognizedText, setLiveRecognizedText] = useState<string>("");
   const [microphoneIconActive, setMicrophoneIconActive] =
     useState<boolean>(false);
-  const [isMicrophoneDisabled, setIsMicrophoneDisabled] = useState(false);
   const [isTextAreaDisabled, setIsTextAreaDisabled] = useState(false);
   useEffect(() => {
     if (isRecognizing) {
@@ -51,9 +50,7 @@ export const QuestionInput = ({
       setMicrophoneIconActive(false); // Set microphone icon to inactive
     }
   }, [recognizedText, isRecognizing]);
-  useEffect(() => {
-    setIsMicrophoneDisabled(isTextToSpeachActive);
-  }, [isTextToSpeachActive]);
+
   const sendQuestion = () => {
     if (disabled || (!question.trim() && !liveRecognizedText.trim())) {
       return;
@@ -110,38 +107,28 @@ export const QuestionInput = ({
       <div className={styles.microphoneAndSendContainer}>
         {/* Microphone Icon */}
         
-        {/* <button
+        <button
           type="button"
-          disabled={isMicrophoneDisabled ? true : false}
+          disabled={disabled || isTextToSpeachActive}
           className={styles.questionInputMicrophone}
-          onClick={
-            isListening ? (e) => onStopClick(e) : (e) => onMicrophoneClick(e)
-          }
-          onKeyDown={(e) =>
-            e.key === "Enter" || e.key === " "
-              ? isListening
-                ? () => onStopClick(e)
-                : () => onMicrophoneClick(e)
-              : null
-          }
-          role="button"
-          tabIndex={0}
-          aria-label="Microphone button"
+          onClick={isListening ? onStopClick : onMicrophoneClick}
+          aria-label={isListening ? "Stop voice input" : "Start voice input"}
+          aria-pressed={isListening}
         >
-          {microphoneIconActive || isMicrophoneDisabled ? (
+          {microphoneIconActive || isTextToSpeachActive ? (
             <FontAwesomeIcon
               icon={faMicrophone}
               className={styles.microphoneIconActive}
-              style={{ color: isMicrophoneDisabled ? "lightgray" : "blue" }}
+              style={{ color: isTextToSpeachActive ? "lightgray" : "blue" }}
             />
           ) : (
             <img
               src={MicrophoneIcon}
               className={styles.microphoneIcon}
-              alt="Microphone"
+              alt=""
             />
           )}
-        </button> */}
+        </button>
        
 
         {/* Send Button */}

@@ -38,6 +38,9 @@ describe("QuestionInput Component", () => {
     );
 
     expect(screen.getByPlaceholderText("Ask a question")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Start voice input" })
+    ).toHaveAttribute("aria-pressed", "false");
   });
 
   test("when recognised text passed and listening is true", () => {
@@ -66,6 +69,9 @@ describe("QuestionInput Component", () => {
     const input = screen.getByPlaceholderText("Ask a question");
 
     expect(screen.getByText("recognized text")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Stop voice input" })
+    ).toHaveAttribute("aria-pressed", "true");
   });
 
   test("does not call onSend when disabled", () => {
@@ -223,33 +229,83 @@ describe("QuestionInput Component", () => {
     expect(input).toHaveValue("");
   });
 
-  test("microphone button is disabled", () => {
+  test("microphone is disabled while spoken playback is active", () => {
     render(
       <QuestionInput
-        isRecognizing={true}
+        isRecognizing={false}
         onSend={mockOnSend}
         disabled={false}
         placeholder="Ask a question"
-        onMicrophoneClick={function (): void {
-          throw new Error("Function not implemented.");
-        }}
-        onStopClick={function (): void {
-          throw new Error("Function not implemented.");
-        }}
+        onMicrophoneClick={onMicrophoneClick}
+        onStopClick={onStopClick}
         isSendButtonDisabled={false}
-        recognizedText={"recognized text"}
-        isListening={true}
+        recognizedText=""
+        isListening={false}
         isTextToSpeachActive={true}
         setRecognizedText={function (text: string): void {}}
         clearOnSend={true}
       />
     );
 
-    const microphonebtn = screen.getByRole("button", {
-      name: "Microphone button",
-    });
+    expect(
+      screen.getByRole("button", { name: "Start voice input" })
+    ).toBeDisabled();
+  });
 
-    expect(microphonebtn).toBeDisabled();
+  test("microphone keyboard activation starts listening once", async () => {
+    const user = userEvent.setup();
+    render(
+      <QuestionInput
+        isRecognizing={false}
+        onSend={mockOnSend}
+        disabled={false}
+        placeholder="Ask a question"
+        onMicrophoneClick={onMicrophoneClick}
+        onStopClick={onStopClick}
+        isSendButtonDisabled={false}
+        recognizedText=""
+        isListening={false}
+        isTextToSpeachActive={false}
+        setRecognizedText={function (text: string): void {}}
+        clearOnSend={true}
+      />
+    );
+
+    const microphoneButton = screen.getByRole("button", {
+      name: "Start voice input",
+    });
+    microphoneButton.focus();
+    await user.keyboard("{Enter}");
+
+    expect(onMicrophoneClick).toHaveBeenCalledTimes(1);
+  });
+
+  test("microphone Space activation starts listening once", async () => {
+    const user = userEvent.setup();
+    render(
+      <QuestionInput
+        isRecognizing={false}
+        onSend={mockOnSend}
+        disabled={false}
+        placeholder="Ask a question"
+        onMicrophoneClick={onMicrophoneClick}
+        onStopClick={onStopClick}
+        isSendButtonDisabled={false}
+        recognizedText=""
+        isListening={false}
+        isTextToSpeachActive={false}
+        setRecognizedText={function (text: string): void {}}
+        clearOnSend={true}
+      />
+    );
+
+    const microphoneButton = screen.getByRole("button", {
+      name: "Start voice input",
+    });
+    microphoneButton.focus();
+    await user.keyboard(" ");
+
+    expect(onMicrophoneClick).toHaveBeenCalledTimes(1);
   });
 
   test("Microphone button click onStopClick", async () => {
@@ -275,7 +331,7 @@ describe("QuestionInput Component", () => {
     );
 
     const microphonebtn = screen.getByRole("button", {
-      name: "Microphone button",
+      name: "Stop voice input",
     });
     await userEvent.click(microphonebtn);
 
@@ -301,7 +357,7 @@ describe("QuestionInput Component", () => {
     );
 
     const microphonebtn = screen.getByRole("button", {
-      name: "Microphone button",
+      name: "Start voice input",
     });
 
     microphonebtn.focus();
@@ -331,7 +387,7 @@ describe("QuestionInput Component", () => {
     );
 
     const microphonebtn = screen.getByRole("button", {
-      name: "Microphone button",
+      name: "Start voice input",
     });
 
     fireEvent.keyDown(microphonebtn, { key: "A", code: "A", charCode: 65 });
